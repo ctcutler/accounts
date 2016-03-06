@@ -14,30 +14,45 @@ readline.parse_and_bind("bind ^I rl_complete")
 
 class LedgerImportCmd(Cmd):
     journal = None
+    new_transactions = None
+    suggestion = None
 
-    def set_suggestion(self):
-        """
-        FIXME:
-        * for every line in input file
-          * parse line
-          * build and print incomplete transaction
-          * look up and print suggestion(s)
-          * accept user input and update transaction
-          * store transaction in journal
-        """
-        self.prompt = 'Enter Account [{}]: '.format(choice(self.journal.accounts))
+    def get_suggestion(self, trans):
+        possibilities = self.journal.desc_acct_map.get(trans.desc, ())
+        already_there = [posting.account for posting in trans.postings]
+        for p in reversed(possibilities):
+            if p not in already_there:
+                return p
+        return ''
+
+    def display_next_trans(self):
+        if self.new_transactions:
+            trans = self.new_transactions[0]
+            print str(trans)
+            self.suggestion = self.get_suggestion(trans)
+            self.prompt = 'Enter Account [{}]: '.format(self.suggestion)
+        else:
+            print 'Done!'
+            self.prompt = 'Control-D to exit:'
+
+    def update_trans(self, acct):
+        trans = self.new_transactions[0]
+        self.journal.accounts.add(acct)
+        self.journal.desc_acct_map[trans.desc].add(acct)
+        trans.postings.append(Posting(account=acct))
+        self.journal.transactions.append(trans)
+        self.new_transactions.pop(0)
+        self.display_next_trans()
 
     # CMD methods
     def default(self, line):
-        if line not in self.journal.accounts:
-            self.journal.accounts.append(line)
-        self.set_suggestion()
+        self.update_trans(line)
 
     def completenames(self, text, line, begidx, endidx):
         return [c for c in self.journal.accounts if c.startswith(text)]
 
     def emptyline(self):
-        self.set_suggestion()
+        self.update_trans(self.suggestion)
 
     def do_EOF(self, line):
         return True
@@ -80,12 +95,12 @@ class Journal(object):
 
     def __init__(self):
         self.transactions = []
-        self.accounts = []
+        self.accounts = set()
         self.desc_acct_map = defaultdict(set)
 
     def __str__(self):
         return '{}\n\n{}\n'.format(
-            '\n'.join('account '+ a for a in self.accounts),
+            '\n'.join('account '+ a for a in sorted(self.accounts)),
             '\n'.join(str(t) for t in self.transactions)
         )
 
@@ -106,7 +121,7 @@ class Journal(object):
             for line in f.readlines():
                 line = line.rstrip()
                 if re.match(account_re, line):
-                    journal.accounts.append(line.split(' ', 1)[1].strip())
+                    journal.accounts.add(line.split(' ', 1)[1].strip())
                 elif re.match(date_desc_re, line):
                     trans = Transaction()
                     parts = line.split(' ', 1)
@@ -186,7 +201,7 @@ def main():
     cmd.journal = Journal.parse_file(args.journal)
     cmd.new_transactions = args.input_parser.parse_file(args.input)
 
-    cmd.set_suggestion()
+    cmd.display_next_trans()
     cmd.cmdloop()
 
     if not args.output:
