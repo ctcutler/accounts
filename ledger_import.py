@@ -18,9 +18,10 @@ class LedgerImportCmd(Cmd):
     suggestion = None
 
     def get_suggestion(self, trans):
-        possibilities = self.journal.desc_acct_map.get(trans.desc, ())
+        possibilities = self.journal.desc_acct_map.get(trans.desc, set())
         already_there = [posting.account for posting in trans.postings]
-        for p in reversed(possibilities):
+        # FIXME: somewhat randomly prefer the first acceptable possibility
+        for p in possibilities:
             if p not in already_there:
                 return p
         return ''
