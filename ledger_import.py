@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from datetime import datetime
 from cmd import Cmd
 from collections import defaultdict
 from decimal import Decimal
@@ -14,11 +15,19 @@ class LedgerImportCmd(Cmd):
     journal = None
 
     def set_suggestion(self):
+        """
+        FIXME:
+        * for every line in input file
+          * parse line
+          * build and print incomplete transaction
+          * look up and print suggestion(s)
+          * accept user input and update transaction
+          * store transaction in journal
+        """
         self.prompt = 'Enter Account [{}]: '.format(choice(self.journal.accounts))
 
     # CMD methods
     def default(self, line):
-        print line
         if line not in self.journal.accounts:
             self.journal.accounts.append(line)
         self.set_suggestion()
@@ -74,7 +83,6 @@ class Journal(object):
     def build_desc_acct_map(self):
         for trans in self.transactions:
             self.desc_acct_map[trans.desc].update(p.account for p in trans.postings)
-        print self.desc_acct_map
 
     @classmethod
     def parse_file(cls, fn):
@@ -113,30 +121,54 @@ class Journal(object):
 
         return journal
 
+class InputParser(object):
+    pass
+
+class NecuParser(InputParser):
+    @classmethod
+    def parse_file(cls, fn):
+        print 'NECU: '+fn
+
+class UsBankParser(InputParser):
+    @classmethod
+    def parse_file(cls, fn):
+        print 'U.S. Bank: '+fn
 
 def main():
     """
     * read/parse existing journal file
-    * for every line in input file
-      * parse line
-      * build and print incomplete transaction
-      * look up and print suggestion(s)
-      * accept user input and update transaction
-      * store transaction in journal
-    * write new journal file
+    * read/parse input file, building list of new transactions
+    * pass new transactions to cmd instance and enter loop
+    * when loop exists, write new journal file, to output file
     """
-    arg_parser = ArgumentParser(description='Parse financial data and add to a ledger journal.')
+    arg_parser = ArgumentParser(
+        description='Parse financial data and add to a ledger journal.'
+    )
     arg_parser.add_argument('-j', '--journal')
     arg_parser.add_argument('-i', '--input')
     arg_parser.add_argument('-o', '--output')
+    arg_parser.add_argument(
+        '--necu', dest='input_parser', action='store_const', const=NecuParser,
+        help='input file comes from NECU'
+    )
+    arg_parser.add_argument(
+        '--usbank', dest='input_parser', action='store_const', const=UsBankParser,
+        help='input file comes from U.S. Bank'
+    )
 
     args = arg_parser.parse_args()
 
     cmd = LedgerImportCmd()
     cmd.journal = Journal.parse_file(args.journal)
+    cmd.new_transactions = args.input_parser.parse_file(args.input)
 
     cmd.set_suggestion()
     cmd.cmdloop()
+
+    if not args.output:
+        args.output = args.journal + datetime.now().strftime('.%Y-%m-%d')
+    with open(args.output, 'w') as f:
+        f.write(str(cmd.journal))
 
 if __name__ == "__main__":
     main()
