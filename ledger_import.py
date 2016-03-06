@@ -1,3 +1,4 @@
+import csv
 from argparse import ArgumentParser
 from datetime import datetime
 from cmd import Cmd
@@ -46,17 +47,25 @@ class Transaction(object):
     desc = None
     postings = None
 
-    def __init__(self):
-        self.postings = []
+    def __init__(self, date=None, desc=None, postings=None):
+        self.date = date
+        self.desc = desc
+        self.postings = postings if postings is not None else []
 
     def __str__(self):
         return '{} {}\n{}\n'.format(
-            self.date, self.desc, '\n'.join(str(p) for p in self.postings)
+            self.date.strftime('%Y/%m/%d'),
+            self.desc,
+            '\n'.join(str(p) for p in self.postings)
         )
 
 class Posting(object):
     account = None
     quantity = None
+
+    def __init__(self, account=None, quantity=None):
+        self.account = account
+        self.quantity = quantity
 
     def __str__(self):
         s = '  ' + self.account
@@ -100,7 +109,9 @@ class Journal(object):
                     journal.accounts.append(line.split(' ', 1)[1].strip())
                 elif re.match(date_desc_re, line):
                     trans = Transaction()
-                    trans.date, trans.desc = line.split(' ', 1)
+                    parts = line.split(' ', 1)
+                    trans.date = datetime.strptime(parts[0], '%Y/%m/%d')
+                    trans.desc = parts[1]
                 elif re.match(comment_re, line):
                     pass # ignore for now
                 elif re.match(posting_re, line):
@@ -121,18 +132,31 @@ class Journal(object):
 
         return journal
 
-class InputParser(object):
+# FIXME: don't forget about testing transaction uniqueness
+# FIXME: don't forget about regular expressions
+
+class NecuParser(object):
+    @classmethod
+    def make_transaction(cls, parts):
+        desc = parts[3].strip('"')
+        date = datetime.strptime(parts[1], '%m/%d/%y')
+        quantity = Decimal(parts[4])
+        if parts[5] == 'DR':
+            quantity *= -1
+        posting = Posting(account='Assets:NECU:Checking', quantity=quantity)
+        return Transaction(date=date, desc=desc, postings=[posting])
+
+    @classmethod
+    def parse_file(cls, fn):
+        with open(fn) as f:
+            return [
+                cls.make_transaction(parts)
+                for parts in csv.reader(f)
+                if parts[0] != 'Account Designator'
+            ]
+
+class UsBankParser(object):
     pass
-
-class NecuParser(InputParser):
-    @classmethod
-    def parse_file(cls, fn):
-        print 'NECU: '+fn
-
-class UsBankParser(InputParser):
-    @classmethod
-    def parse_file(cls, fn):
-        print 'U.S. Bank: '+fn
 
 def main():
     """
