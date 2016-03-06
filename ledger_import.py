@@ -1,4 +1,4 @@
-import sys
+from argparse import ArgumentParser
 from cmd import Cmd
 from collections import defaultdict
 from decimal import Decimal
@@ -11,16 +11,6 @@ import readline
 readline.parse_and_bind("bind ^I rl_complete")
 
 class LedgerImportCmd(Cmd):
-    """
-    TODO:
-    * read transactions from existing .dat file
-    * make dict of all known desc -> account pairs
-    * read lines from input file
-        * look up and suggest account based on desc of every line
-    * print new dat file on quit
-        * print new all accounts
-        * print all transactions
-    """
     journal = None
 
     def set_suggestion(self):
@@ -73,13 +63,18 @@ class Journal(object):
     def __init__(self):
         self.transactions = []
         self.accounts = []
-        self.desc_acct_map = {}
+        self.desc_acct_map = defaultdict(set)
 
     def __str__(self):
         return '{}\n\n{}\n'.format(
             '\n'.join('account '+ a for a in self.accounts),
             '\n'.join(str(t) for t in self.transactions)
         )
+
+    def build_desc_acct_map(self):
+        for trans in self.transactions:
+            self.desc_acct_map[trans.desc].update(p.account for p in trans.postings)
+        print self.desc_acct_map
 
     @classmethod
     def parse_file(cls, fn):
@@ -114,14 +109,32 @@ class Journal(object):
                 else:
                     raise Exception('unexpected line: %r' % line)
 
-        print str(journal)
+        journal.build_desc_acct_map()
+
         return journal
 
 
 def main():
-    journal_file = sys.argv[1]
+    """
+    * read/parse existing journal file
+    * for every line in input file
+      * parse line
+      * build and print incomplete transaction
+      * look up and print suggestion(s)
+      * accept user input and update transaction
+      * store transaction in journal
+    * write new journal file
+    """
+    arg_parser = ArgumentParser(description='Parse financial data and add to a ledger journal.')
+    arg_parser.add_argument('-j', '--journal')
+    arg_parser.add_argument('-i', '--input')
+    arg_parser.add_argument('-o', '--output')
+
+    args = arg_parser.parse_args()
+
     cmd = LedgerImportCmd()
-    cmd.journal = Journal.parse_file(journal_file)
+    cmd.journal = Journal.parse_file(args.journal)
+
     cmd.set_suggestion()
     cmd.cmdloop()
 
