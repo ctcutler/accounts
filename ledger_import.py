@@ -4,6 +4,7 @@ from datetime import datetime
 from cmd import Cmd
 from collections import defaultdict
 from decimal import Decimal
+from hashlib import sha1
 from random import choice
 import re
 
@@ -16,9 +17,10 @@ class LedgerImportCmd(Cmd):
     journal = None
     new_transactions = None
     suggestion = None
+    DUPLICATE = 'SKIP DUPLICATE'
 
     def get_suggestion(self, trans):
-        possibilities = self.journal.desc_acct_map.get(trans.desc, set())
+        possibilities = self.journal.description_map.get(trans.desc, set())
         already_there = [posting.account for posting in trans.postings]
         # FIXME: somewhat randomly prefer the first acceptable possibility
         for p in possibilities:
@@ -29,8 +31,16 @@ class LedgerImportCmd(Cmd):
     def display_next_trans(self):
         if self.new_transactions:
             trans = self.new_transactions[0]
+            print '\n' + ('-' * 40)
             print str(trans)
-            self.suggestion = self.get_suggestion(trans)
+            unique_id = trans.unique_id
+            if unique_id in self.journal.unique_id_map:
+                print 'POTENTIAL DUPLICATE OF: \n{}'.format(
+                    self.journal.unique_id_map[unique_id]
+                )
+                self.suggestion = self.DUPLICATE
+            else:
+                self.suggestion = self.get_suggestion(trans)
             self.prompt = 'Enter Account [{}]: '.format(self.suggestion)
         else:
             print 'Done!'
@@ -38,25 +48,49 @@ class LedgerImportCmd(Cmd):
 
     def update_trans(self, acct):
         trans = self.new_transactions[0]
+        self.journal.unique_id_map[trans.unique_id] = trans
         self.journal.accounts.add(acct)
-        self.journal.desc_acct_map[trans.desc].add(acct)
+        self.journal.description_map[trans.desc].add(acct)
         trans.postings.append(Posting(account=acct))
         self.journal.transactions.append(trans)
+        self.journal.unique_id_map[trans.unique_id] = trans
+
+    def next_trans(self):
         self.new_transactions.pop(0)
         self.display_next_trans()
 
     # CMD methods
     def default(self, line):
         self.update_trans(line)
+        self.next_trans()
 
     def completenames(self, text, line, begidx, endidx):
         return [c for c in self.journal.accounts if c.startswith(text)]
 
     def emptyline(self):
-        self.update_trans(self.suggestion)
+        if self.suggestion:
+            if self.suggestion != self.DUPLICATE:
+                self.update_trans(self.suggestion)
+            self.next_trans()
+        else:
+            print 'Please enter an account'
 
     def do_EOF(self, line):
         return True
+
+class Posting(object):
+    account = None
+    quantity = 0
+
+    def __init__(self, account=None, quantity=0):
+        self.account = account
+        self.quantity = quantity
+
+    def __str__(self):
+        s = '  ' + self.account
+        if self.quantity:
+            s += ' $ %s' % self.quantity
+        return s
 
 class Transaction(object):
     date = None
@@ -68,6 +102,33 @@ class Transaction(object):
         self.desc = desc
         self.postings = postings if postings is not None else []
 
+    @property
+    def unique_id(self):
+        """ Some thoughts about hashing transactions:
+         * We're trying to guard against duplicates caused by running over the same
+           input file multiple times.
+         * We don't want to omit actual duplicates in the input file.
+         * We want to omit mirror image duplicates, e.g. the lines in the credit
+           union and credit card statements recording the payment of the credit card
+           bill.
+         * Unique key should be based on date, quantity of money moving from
+           account to account, and concatenation of all accounts.
+         * We're going to maintain a collection of all transactions, even new ones and
+           warn the user when a duplicate comes up
+        """
+        s = sha1()
+        s.update(str(self.date))
+        pos_total = 0
+        neg_total = 0
+        for posting in self.postings:
+            s.update(posting.account)
+            if posting.quantity > 0:
+                pos_total += posting.quantity
+            else:
+                neg_total += posting.quantity
+        s.update(str(max(pos_total, abs(neg_total))))
+        return s.hexdigest()
+
     def __str__(self):
         return '{} {}\n{}\n'.format(
             self.date.strftime('%Y/%m/%d'),
@@ -75,29 +136,19 @@ class Transaction(object):
             '\n'.join(str(p) for p in self.postings)
         )
 
-class Posting(object):
-    account = None
-    quantity = None
-
-    def __init__(self, account=None, quantity=None):
-        self.account = account
-        self.quantity = quantity
-
-    def __str__(self):
-        s = '  ' + self.account
-        if self.quantity is not None:
-            s += ' $ %s' % self.quantity
-        return s
-
 class Journal(object):
     transactions = None
     accounts = None
-    desc_acct_map = None
+    # unique_id -> Transaction
+    unique_id_map = None
+    # description -> account name
+    description_map = None
 
     def __init__(self):
         self.transactions = []
+        self.unique_id_map = {}
         self.accounts = set()
-        self.desc_acct_map = defaultdict(set)
+        self.description_map = defaultdict(set)
 
     def __str__(self):
         return '{}\n\n{}\n'.format(
@@ -105,9 +156,9 @@ class Journal(object):
             '\n'.join(str(t) for t in self.transactions)
         )
 
-    def build_desc_acct_map(self):
+    def build_description_map(self):
         for trans in self.transactions:
-            self.desc_acct_map[trans.desc].update(p.account for p in trans.postings)
+            self.description_map[trans.desc].update(p.account for p in trans.postings)
 
     @classmethod
     def parse_file(cls, fn):
@@ -140,16 +191,22 @@ class Journal(object):
                 elif not line.strip():
                     if trans:
                         journal.transactions.append(trans)
+                        if trans.unique_id in journal.unique_id_map:
+                            print 'WARNING: {} and {} are duplicates'.format(
+                                str(trans),
+                                str(journal.unique_id_map[trans.unique_id]),
+                            )
+                        journal.unique_id_map[trans.unique_id] = trans
                     trans = None
                 else:
                     raise Exception('unexpected line: %r' % line)
 
-        journal.build_desc_acct_map()
+        journal.build_description_map()
 
         return journal
 
-# FIXME: don't forget about testing transaction uniqueness
 # FIXME: don't forget about regular expressions
+# FIXME: don't forget about unit tests
 
 class NecuParser(object):
     @classmethod
