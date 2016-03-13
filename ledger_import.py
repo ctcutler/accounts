@@ -20,10 +20,9 @@ class LedgerImportCmd(Cmd):
     DUPLICATE = 'SKIP DUPLICATE'
 
     def get_suggestion(self, trans):
-        possibilities = self.journal.description_map.get(trans.desc, set())
+        possibilities = self.journal.description_map.get(trans.desc, [])
         already_there = [posting.account for posting in trans.postings]
-        # FIXME: somewhat randomly prefer the first acceptable possibility
-        for p in possibilities:
+        for p in reversed(possibilities):
             if p not in already_there:
                 return p
         return ''
@@ -47,10 +46,13 @@ class LedgerImportCmd(Cmd):
             self.prompt = 'Control-D to exit:'
 
     def update_trans(self, acct):
+        """Pulls first transaction off the queue, updates the unique id map,
+           updates everything with then new transaction details, and updates
+           the unique id map again with the updated transaction."""
         trans = self.new_transactions[0]
         self.journal.unique_id_map[trans.unique_id] = trans
         self.journal.accounts.add(acct)
-        self.journal.description_map[trans.desc].add(acct)
+        self.journal.description_map[trans.desc].append(acct)
         trans.postings.append(Posting(account=acct))
         self.journal.transactions.append(trans)
         self.journal.unique_id_map[trans.unique_id] = trans
@@ -148,7 +150,7 @@ class Journal(object):
         self.transactions = []
         self.unique_id_map = {}
         self.accounts = set()
-        self.description_map = defaultdict(set)
+        self.description_map = defaultdict(list)
 
     def __str__(self):
         return '{}\n\n{}\n'.format(
@@ -158,7 +160,7 @@ class Journal(object):
 
     def build_description_map(self):
         for trans in self.transactions:
-            self.description_map[trans.desc].update(p.account for p in trans.postings)
+            self.description_map[trans.desc] += [p.account for p in trans.postings]
 
     @classmethod
     def parse_file(cls, fn):
