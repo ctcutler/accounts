@@ -102,7 +102,44 @@ account Income
 
 class TestTransaction(TestCase):
     def test_unique_id(self):
-        pass
+        # everything is the same, ids are same
+        date = datetime(2016, 3, 20)
+        desc = 'desc desc desc'
+        postings = [
+            Posting(account='account 1', quantity=Decimal('123.45')),
+            Posting(account='account 2', quantity=0)
+        ]
+        trans1 = Transaction(date=date, desc=desc, postings=postings)
+        trans2 = Transaction(date=date, desc=desc, postings=postings)
+        self.assertEqual(trans1.unique_id, trans2.unique_id)
+
+        # dates are different, ids are different
+        trans2 = Transaction(date=datetime(2016, 3, 20, 1), desc=desc, postings=postings)
+        self.assertNotEqual(trans1.unique_id, trans2.unique_id)
+
+        # descs are different, ids are same
+        trans2 = Transaction(date=date, desc='different', postings=postings)
+        self.assertEqual(trans1.unique_id, trans2.unique_id)
+
+        # posting order reversed, ids are same
+        trans2 = Transaction(date=date, desc='different', postings=reversed(postings))
+        self.assertEqual(trans1.unique_id, trans2.unique_id)
+
+        # posting amounts are different, ids are different
+        postings2 = [
+            Posting(account='account 1', quantity=Decimal('234.56')),
+            Posting(account='account 2', quantity=0)
+        ]
+        trans2 = Transaction(date=date, desc='different', postings=postings2)
+        self.assertNotEqual(trans1.unique_id, trans2.unique_id)
+
+        # posting amounts are opposites, ids are same
+        postings2 = [
+            Posting(account='account 1', quantity=Decimal('-123.45')),
+            Posting(account='account 2', quantity=0)
+        ]
+        trans2 = Transaction(date=date, desc='different', postings=postings2)
+        self.assertEqual(trans1.unique_id, trans2.unique_id)
 
 if __name__ == '__main__':
     unittest_main()

@@ -122,7 +122,7 @@ class Transaction(object):
         s.update(str(self.date).encode('utf-8'))
         pos_total = 0
         neg_total = 0
-        for posting in self.postings:
+        for posting in sorted(self.postings, key=lambda p: p.account):
             s.update(posting.account.encode('utf-8'))
             if posting.quantity > 0:
                 pos_total += posting.quantity
