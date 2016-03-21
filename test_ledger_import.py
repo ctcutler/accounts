@@ -32,32 +32,39 @@ class TestUsBankParser(TestCase):
     pass
 
 class TestLedgerImportCmd(TestCase):
-    def test_get_suggestion(self):
-        DESC = 'Description!'
-        cmd = LedgerImportCmd()
-        cmd.journal = Journal()
-        cmd.journal.description_map = {}
-        trans = Transaction()
-        trans.desc = DESC
-        trans.postings = [Posting(account=a) for a in ['Foo', 'Bar']]
+    def setUp(self):
+        self.DESC = 'Description!'
 
-        # test with no possibilities
-        sugg = cmd.get_suggestion(trans)
+        self.cmd = LedgerImportCmd()
+        self.cmd.journal = Journal()
+        self.cmd.journal.description_map = {}
+
+        self.trans = Transaction()
+        self.trans.desc = self.DESC
+        self.trans.postings = [Posting(account=a) for a in ['Foo', 'Bar']]
+
+    def test_get_suggestion_none(self):
+        "No possibilities"
+        sugg = self.cmd.get_suggestion(self.trans)
         self.assertEqual(sugg, '')
 
-        # test with all possibilities already in transaction
-        cmd.journal.description_map = {DESC: ['Foo', 'Bar']}
-        sugg = cmd.get_suggestion(trans)
+    def test_get_suggestion_all_found(self):
+        "All possibilities already in transaction"
+
+        self.cmd.journal.description_map = {self.DESC: ['Foo', 'Bar']}
+        sugg = self.cmd.get_suggestion(self.trans)
         self.assertEqual(sugg, '')
 
-        # test with first possibility already in transaction, but second works
-        cmd.journal.description_map[DESC] = ['Foo', 'Quux']
-        sugg = cmd.get_suggestion(trans)
+    def test_get_suggestion_second_works(self):
+        "First possibility already in transaction, but second works"
+        self.cmd.journal.description_map[self.DESC] = ['Foo', 'Quux']
+        sugg = self.cmd.get_suggestion(self.trans)
         self.assertEqual(sugg, 'Quux')
 
-        # test with two matches, second one is returned
-        cmd.journal.description_map[DESC] = ['Quux', 'Bork']
-        sugg = cmd.get_suggestion(trans)
+    def test_get_suggestion_second_match_returned(self):
+        "two matches, second one is returned"
+        self.cmd.journal.description_map[self.DESC] = ['Quux', 'Bork']
+        sugg = self.cmd.get_suggestion(self.trans)
         self.assertEqual(sugg, 'Bork')
 
 class TestJournal(TestCase):
@@ -101,45 +108,56 @@ account Income
         self.assertEqual(journal.description_map, expected_desc_map)
 
 class TestTransaction(TestCase):
-    def test_unique_id(self):
-        # everything is the same, ids are same
-        date = datetime(2016, 3, 20)
-        desc = 'desc desc desc'
-        postings = [
+    def setUp(self):
+        self.date = datetime(2016, 3, 20)
+        self.desc = 'desc desc desc'
+        self.postings = [
             Posting(account='account 1', quantity=Decimal('123.45')),
             Posting(account='account 2', quantity=0)
         ]
-        trans1 = Transaction(date=date, desc=desc, postings=postings)
-        trans2 = Transaction(date=date, desc=desc, postings=postings)
-        self.assertEqual(trans1.unique_id, trans2.unique_id)
+        self.trans1 = Transaction(date=self.date, desc=self.desc, postings=self.postings)
 
-        # dates are different, ids are different
-        trans2 = Transaction(date=datetime(2016, 3, 20, 1), desc=desc, postings=postings)
-        self.assertNotEqual(trans1.unique_id, trans2.unique_id)
+    def test_unique_id_same(self):
+        "everything is the same, ids are same"
+        trans2 = Transaction(date=self.date, desc=self.desc, postings=self.postings)
+        self.assertEqual(self.trans1.unique_id, trans2.unique_id)
 
-        # descs are different, ids are same
-        trans2 = Transaction(date=date, desc='different', postings=postings)
-        self.assertEqual(trans1.unique_id, trans2.unique_id)
+    def test_unique_id_different_dates(self):
+        "dates are different, ids are different"
+        trans2 = Transaction(
+            date=datetime(2016, 3, 20, 1), desc=self.desc, postings=self.postings
+        )
+        self.assertNotEqual(self.trans1.unique_id, trans2.unique_id)
 
-        # posting order reversed, ids are same
-        trans2 = Transaction(date=date, desc='different', postings=reversed(postings))
-        self.assertEqual(trans1.unique_id, trans2.unique_id)
+    def test_unique_id_different_descs(self):
+        "descs are different, ids are same"
+        trans2 = Transaction(date=self.date, desc='different', postings=self.postings)
+        self.assertEqual(self.trans1.unique_id, trans2.unique_id)
 
-        # posting amounts are different, ids are different
+    def test_unique_id_reversed_postings(self):
+        "posting order reversed, ids are same"
+        trans2 = Transaction(
+            date=self.date, desc='different', postings=reversed(self.postings)
+        )
+        self.assertEqual(self.trans1.unique_id, trans2.unique_id)
+
+    def test_unique_id_reversed_postings(self):
+        "posting amounts are different, ids are different"
         postings2 = [
             Posting(account='account 1', quantity=Decimal('234.56')),
             Posting(account='account 2', quantity=0)
         ]
-        trans2 = Transaction(date=date, desc='different', postings=postings2)
-        self.assertNotEqual(trans1.unique_id, trans2.unique_id)
+        trans2 = Transaction(date=self.date, desc='different', postings=postings2)
+        self.assertNotEqual(self.trans1.unique_id, trans2.unique_id)
 
-        # posting amounts are opposites, ids are same
+    def test_unique_id_opposite_amounts(self):
+        "posting amounts are opposites, ids are same"
         postings2 = [
             Posting(account='account 1', quantity=Decimal('-123.45')),
             Posting(account='account 2', quantity=0)
         ]
-        trans2 = Transaction(date=date, desc='different', postings=postings2)
-        self.assertEqual(trans1.unique_id, trans2.unique_id)
+        trans2 = Transaction(date=self.date, desc='different', postings=postings2)
+        self.assertEqual(self.trans1.unique_id, trans2.unique_id)
 
 if __name__ == '__main__':
     unittest_main()
