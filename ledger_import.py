@@ -30,19 +30,19 @@ class LedgerImportCmd(Cmd):
     def display_next_trans(self):
         if self.new_transactions:
             trans = self.new_transactions[0]
-            print '\n' + ('-' * 40)
-            print str(trans)
+            print('\n' + ('-' * 40))
+            print(str(trans))
             unique_id = trans.unique_id
             if unique_id in self.journal.unique_id_map:
-                print 'POTENTIAL DUPLICATE OF: \n{}'.format(
+                print('POTENTIAL DUPLICATE OF: \n{}'.format(
                     self.journal.unique_id_map[unique_id]
-                )
+                ))
                 self.suggestion = self.DUPLICATE
             else:
                 self.suggestion = self.get_suggestion(trans)
             self.prompt = 'Enter Account [{}]: '.format(self.suggestion)
         else:
-            print 'Done!'
+            print('Done!')
             self.prompt = 'Control-D to exit:'
 
     def update_trans(self, acct):
@@ -75,7 +75,7 @@ class LedgerImportCmd(Cmd):
                 self.update_trans(self.suggestion)
             self.next_trans()
         else:
-            print 'Please enter an account'
+            print('Please enter an account')
 
     def do_EOF(self, line):
         return True
@@ -119,16 +119,16 @@ class Transaction(object):
            warn the user when a duplicate comes up
         """
         s = sha1()
-        s.update(str(self.date))
+        s.update(str(self.date).encode('utf-8'))
         pos_total = 0
         neg_total = 0
         for posting in self.postings:
-            s.update(posting.account)
+            s.update(posting.account.encode('utf-8'))
             if posting.quantity > 0:
                 pos_total += posting.quantity
             else:
                 neg_total += posting.quantity
-        s.update(str(max(pos_total, abs(neg_total))))
+        s.update(str(max(pos_total, abs(neg_total))).encode('utf-8'))
         return s.hexdigest()
 
     def __str__(self):
@@ -194,10 +194,10 @@ class Journal(object):
                     if trans:
                         journal.transactions.append(trans)
                         if trans.unique_id in journal.unique_id_map:
-                            print 'WARNING: {} and {} are duplicates'.format(
+                            print('WARNING: {} and {} are duplicates'.format(
                                 str(trans),
                                 str(journal.unique_id_map[trans.unique_id]),
-                            )
+                            ))
                         journal.unique_id_map[trans.unique_id] = trans
                     trans = None
                 else:
@@ -208,7 +208,6 @@ class Journal(object):
         return journal
 
 # FIXME: don't forget about regular expressions
-# FIXME: don't forget about unit tests
 
 class NecuParser(object):
     @classmethod
