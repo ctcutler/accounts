@@ -1,7 +1,11 @@
+import builtins
+from collections import defaultdict
 from csv import reader as csv_reader
 from datetime import datetime
 from decimal import Decimal
+from sys import version_info
 from unittest import TestCase, main as unittest_main
+from unittest.mock import patch, mock_open
 
 from ledger_import import NecuParser, LedgerImportCmd, Journal, Posting, Transaction
 
@@ -56,26 +60,49 @@ class TestLedgerImportCmd(TestCase):
         sugg = cmd.get_suggestion(trans)
         self.assertEqual(sugg, 'Bork')
 
-    def test_display_next_trans(self):
-        pass
-
-    def test_update_trans(self):
-        pass
-
-    def test_next_trans(self):
-        pass
-
-    def test_default(self):
-        pass
-
-    def test_completenames(self):
-        pass
-
-    def test_emptyline(self):
-        pass
-
 class TestJournal(TestCase):
-    pass
+    def test_parse_file(self):
+        test_data = """;this is a comment
+account Expenses
+account Income
+
+;this another comment
+2016/02/26 FairPoint Communi Bill Pmt W/D
+  ;this a third comment
+  Assets:NECU:Checking $ -68.47
+  Expenses:Utilities
+
+"""
+        with patch.object(builtins, 'open', mock_open(read_data=test_data)):
+            journal = Journal.parse_file('this file name is ignored by the mock')
+
+        self.assertEqual(len(journal.accounts), 2)
+        self.assertIn('Expenses', journal.accounts)
+        self.assertIn('Income', journal.accounts)
+
+        self.assertEqual(len(journal.transactions), 1)
+        trans = journal.transactions[0]
+        self.assertEqual(trans.date, datetime(2016, 2, 26))
+        self.assertEqual(trans.desc, 'FairPoint Communi Bill Pmt W/D')
+
+        self.assertEqual(len(trans.postings), 2)
+        posting1, posting2 = trans.postings
+        self.assertEqual(posting1.account, 'Assets:NECU:Checking')
+        self.assertEqual(posting1.quantity, Decimal('-68.47'))
+        self.assertEqual(posting2.account, 'Expenses:Utilities')
+        self.assertEqual(posting2.quantity, 0)
+
+        expected_id_map = {'4ab2f241a94310c822a70f447bfe16ed3762cfb1': trans}
+        self.assertEqual(journal.unique_id_map, expected_id_map)
+
+        expected_desc_map = defaultdict(list)
+        expected_desc_map['FairPoint Communi Bill Pmt W/D'].append('Assets:NECU:Checking')
+        expected_desc_map['FairPoint Communi Bill Pmt W/D'].append('Expenses:Utilities')
+        self.assertEqual(journal.description_map, expected_desc_map)
+
+class TestTransaction(TestCase):
+    def test_unique_id(self):
+        pass
 
 if __name__ == '__main__':
     unittest_main()
