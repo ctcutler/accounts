@@ -239,26 +239,23 @@ def main():
     * pass new transactions to cmd instance and enter loop
     * when loop exists, write new journal file, to output file
     """
+    input_parsers = {
+        'necu': NecuParser,
+        'usbank': UsBankParser
+    }
     arg_parser = ArgumentParser(
         description='Parse financial data and add to a ledger journal.'
     )
-    arg_parser.add_argument('-j', '--journal')
-    arg_parser.add_argument('-i', '--input')
+    arg_parser.add_argument('-j', '--journal', required=True)
+    arg_parser.add_argument('-i', '--input', required=True)
     arg_parser.add_argument('-o', '--output')
-    arg_parser.add_argument(
-        '--necu', dest='input_parser', action='store_const', const=NecuParser,
-        help='input file comes from NECU'
-    )
-    arg_parser.add_argument(
-        '--usbank', dest='input_parser', action='store_const', const=UsBankParser,
-        help='input file comes from U.S. Bank'
-    )
+    arg_parser.add_argument('-t', '--input-type', choices=input_parsers.keys(), required=True)
 
     args = arg_parser.parse_args()
 
     cmd = LedgerImportCmd()
     cmd.journal = Journal.parse_file(args.journal)
-    cmd.new_transactions = args.input_parser.parse_file(args.input)
+    cmd.new_transactions = input_parsers[args.input_type].parse_file(args.input)
 
     cmd.display_next_trans()
     cmd.cmdloop()
