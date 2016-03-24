@@ -30,11 +30,11 @@ class LedgerImportCmd(Cmd):
     def display_next_trans(self):
         if self.new_transactions:
             trans = self.new_transactions[0]
-            print('\n' + ('-' * 40))
+            print('\n' + ('-' * 80))
             print(str(trans))
             unique_id = trans.unique_id
             if unique_id in self.journal.unique_id_map:
-                print('POTENTIAL DUPLICATE OF: \n{}'.format(
+                print('MIGHT BE A DUPLICATE OF: \n\n{}'.format(
                     self.journal.unique_id_map[unique_id]
                 ))
                 self.suggestion = self.DUPLICATE
@@ -113,8 +113,8 @@ class Transaction(object):
          * We want to omit mirror image duplicates, e.g. the lines in the credit
            union and credit card statements recording the payment of the credit card
            bill.
-         * Unique key should be based on date, quantity of money moving from
-           account to account, and concatenation of all accounts.
+         * Unique key should be based on date and quantity of money moving from
+           account to account
          * We're going to maintain a collection of all transactions, even new ones and
            warn the user when a duplicate comes up
         """
@@ -123,7 +123,6 @@ class Transaction(object):
         pos_total = 0
         neg_total = 0
         for posting in sorted(self.postings, key=lambda p: p.account):
-            s.update(posting.account.encode('utf-8'))
             if posting.quantity > 0:
                 pos_total += posting.quantity
             else:
@@ -155,7 +154,7 @@ class Journal(object):
     def __str__(self):
         return '{}\n\n{}\n'.format(
             '\n'.join('account '+ a for a in sorted(self.accounts)),
-            '\n'.join(str(t) for t in self.transactions)
+            '\n'.join(str(t) for t in sorted(self.transactions, key=lambda t: t.date))
         )
 
     def build_description_map(self):
@@ -209,7 +208,7 @@ class Journal(object):
 
 # FIXME: don't forget about regular expressions
 # FIXME: consider split transactions (use case: mortgage, auto loan payments)
-# FIXME: patterns that are never suggested for
+# FIXME: patterns that never suggest accounts
 
 class NecuParser(object):
     @classmethod
