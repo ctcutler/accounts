@@ -99,7 +99,7 @@ account Income
         self.assertEqual(posting2.account, 'Expenses:Utilities')
         self.assertEqual(posting2.quantity, 0)
 
-        expected_id_map = {'4ab2f241a94310c822a70f447bfe16ed3762cfb1': trans}
+        expected_id_map = {'305b039298b2e6319e32e4591e2fa5dd98c5c048': trans}
         self.assertEqual(journal.unique_id_map, expected_id_map)
 
         expected_desc_map = defaultdict(list)
