@@ -91,7 +91,7 @@ class Posting(object):
     def __str__(self):
         s = '  ' + self.account
         if self.quantity:
-            s += ' $ %s' % self.quantity
+            s += '    $ %s' % self.quantity
         return s
 
 class Transaction(object):
@@ -208,6 +208,8 @@ class Journal(object):
         return journal
 
 # FIXME: don't forget about regular expressions
+# FIXME: consider split transactions (use case: mortgage, auto loan payments)
+# FIXME: patterns that are never suggested for
 
 class NecuParser(object):
     @classmethod
