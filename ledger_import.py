@@ -27,6 +27,12 @@ class LedgerImportCmd(Cmd):
                 return p
         return ''
 
+    def skip_initial_dups(self):
+        while self.new_transactions and \
+            self.new_transactions[0].unique_id in self.journal.unique_id_map:
+            dup = self.new_transactions.pop(0)
+            print('SKIPPING DUPLICATE:\n{}'.format(dup))
+
     def display_next_trans(self):
         if self.new_transactions:
             trans = self.new_transactions[0]
@@ -206,9 +212,8 @@ class Journal(object):
 
         return journal
 
-# FIXME: don't forget about regular expressions
-# FIXME: consider split transactions (use case: mortgage, auto loan payments)
-# FIXME: patterns that never suggest accounts
+# FIXME: regular expressions: enter /^Foo\n$/ Expenses:Foo:Bar, store in comments
+# FIXME: consider split transactions (use case: mortgage, auto loan payments), do this by putting quantity after account
 
 class NecuParser(object):
     @classmethod
@@ -226,7 +231,7 @@ class NecuParser(object):
         with open(fn) as f:
             return [
                 cls.make_transaction(parts)
-                for parts in csv.reader(f)
+                for parts in reversed(list(csv.reader(f)))
                 if parts[0] != 'Account Designator'
             ]
 
@@ -258,6 +263,7 @@ def main():
     cmd.journal = Journal.parse_file(args.journal)
     cmd.new_transactions = input_parsers[args.input_type].parse_file(args.input)
 
+    cmd.skip_initial_dups()
     cmd.display_next_trans()
     cmd.cmdloop()
 
