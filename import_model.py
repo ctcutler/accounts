@@ -88,14 +88,12 @@ class Journal(object):
     # description -> account name
     description_map = None
 
-    def __init__(self):
-        # FIXME: could require all of these things and instantiate once parser
-        # has built them up
-        self.transactions = []
-        self.unique_id_map = {}
-        self.accounts = set()
-        self.description_map = defaultdict(list)
-        self.regexes = []
+    def __init__(self, transactions, unique_id_map, accounts, description_map, regexes):
+        self.transactions = transactions
+        self.unique_id_map = unique_id_map
+        self.accounts = accounts
+        self.description_map = description_map
+        self.regexes = regexes
 
     def __str__(self):
         return '{}\n\n{}\n\n{}\n'.format(
@@ -104,14 +102,16 @@ class Journal(object):
             '\n'.join(str(t) for t in sorted(self.transactions, key=lambda t: t.date))
         )
 
-    def build_description_map(self):
-        for trans in self.transactions:
-            self.description_map[trans.desc] += [p.account for p in trans.postings]
-
     @classmethod
     def parse_file(cls, fn):
-        journal = Journal()
+        transactions = []
+        unique_id_map = {}
+        accounts = set()
+        description_map = defaultdict(list)
+        regexes = []
+
         trans = None
+
         account_re = re.compile('^account')
         date_desc_re = re.compile('^\d')
         posting_re = re.compile('^\s+\S+')
@@ -122,14 +122,14 @@ class Journal(object):
             for line in f.readlines():
                 line = line.rstrip()
                 if re.match(account_re, line):
-                    journal.accounts.add(line.split(' ', 1)[1].strip())
+                    accounts.add(line.split(' ', 1)[1].strip())
                 elif re.match(date_desc_re, line):
                     trans = Transaction()
                     parts = line.split(' ', 1)
                     trans.date = datetime.strptime(parts[0], '%Y/%m/%d')
                     trans.desc = parts[1]
                 elif re.match(regex_comment_re, line):
-                    journal.regexes.append(AccountRegEx.parse(line))
+                    regexes.append(AccountRegEx.parse(line))
                 elif re.match(comment_re, line):
                     pass # ignore
                 elif re.match(posting_re, line):
@@ -141,17 +141,18 @@ class Journal(object):
                     trans.postings.append(posting)
                 elif not line.strip():
                     if trans:
-                        journal.transactions.append(trans)
-                        if trans.unique_id in journal.unique_id_map:
+                        transactions.append(trans)
+                        if trans.unique_id in unique_id_map:
                             print('WARNING: {} and {} are duplicates'.format(
                                 str(trans),
-                                str(journal.unique_id_map[trans.unique_id]),
+                                str(unique_id_map[trans.unique_id]),
                             ))
-                        journal.unique_id_map[trans.unique_id] = trans
+                        unique_id_map[trans.unique_id] = trans
                     trans = None
                 else:
                     raise Exception('unexpected line: %r' % line)
 
-        journal.build_description_map()
+        for trans in transactions:
+            description_map[trans.desc] += [p.account for p in trans.postings]
 
-        return journal
+        return Journal(transactions, unique_id_map, accounts, description_map, regexes)
