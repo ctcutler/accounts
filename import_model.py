@@ -4,6 +4,24 @@ from decimal import Decimal
 from hashlib import sha1
 import re
 
+class AccountRegEx(object):
+    account = None
+    compiled = None
+    regex = None
+
+    def __init__(self, account, regex):
+        self.account = account
+        self.regex = regex
+        self.compiled = re.compile(regex)
+
+    def __str__(self):
+        return '; /{}/ {}'.format(self.regex, self.account)
+
+    @classmethod
+    def parse(cls, line):
+        _, regex, account = [part.strip() for part in line.split('/', 3)]
+        return AccountRegEx(account, regex)
+
 class Posting(object):
     account = None
     quantity = 0
@@ -64,20 +82,25 @@ class Transaction(object):
 class Journal(object):
     transactions = None
     accounts = None
+    regexes = None
     # unique_id -> Transaction
     unique_id_map = None
     # description -> account name
     description_map = None
 
     def __init__(self):
+        # FIXME: could require all of these things and instantiate once parser
+        # has built them up
         self.transactions = []
         self.unique_id_map = {}
         self.accounts = set()
         self.description_map = defaultdict(list)
+        self.regexes = []
 
     def __str__(self):
-        return '{}\n\n{}\n'.format(
+        return '{}\n\n{}\n\n{}\n'.format(
             '\n'.join('account '+ a for a in sorted(self.accounts)),
+            '\n'.join(str(regex) for regex in self.regexes),
             '\n'.join(str(t) for t in sorted(self.transactions, key=lambda t: t.date))
         )
 
@@ -92,6 +115,7 @@ class Journal(object):
         account_re = re.compile('^account')
         date_desc_re = re.compile('^\d')
         posting_re = re.compile('^\s+\S+')
+        regex_comment_re = re.compile('^\s*;.*/.+/')
         comment_re = re.compile('^\s*;')
 
         with open(fn) as f:
@@ -104,8 +128,10 @@ class Journal(object):
                     parts = line.split(' ', 1)
                     trans.date = datetime.strptime(parts[0], '%Y/%m/%d')
                     trans.desc = parts[1]
+                elif re.match(regex_comment_re, line):
+                    journal.regexes.append(AccountRegEx.parse(line))
                 elif re.match(comment_re, line):
-                    pass # ignore for now
+                    pass # ignore
                 elif re.match(posting_re, line):
                     posting = Posting()
                     parts = line.split('$', 1)
