@@ -43,28 +43,28 @@ class TestLedgerImportCmd(TestCase):
         self.trans.desc = self.DESC
         self.trans.postings = [Posting(account=a) for a in ['Foo', 'Bar']]
 
-    def test_get_suggestion_none(self):
+    def test_get_account_none(self):
         "No possibilities"
-        sugg = self.cmd.get_suggestion(self.trans)
+        sugg = self.cmd.get_account(self.trans)
         self.assertEqual(sugg, '')
 
-    def test_get_suggestion_all_found(self):
+    def test_get_account_all_found(self):
         "All possibilities already in transaction"
 
         self.cmd.journal.description_map = {self.DESC: ['Foo', 'Bar']}
-        sugg = self.cmd.get_suggestion(self.trans)
+        sugg = self.cmd.get_account(self.trans)
         self.assertEqual(sugg, '')
 
-    def test_get_suggestion_second_works(self):
+    def test_get_account_second_works(self):
         "First possibility already in transaction, but second works"
         self.cmd.journal.description_map[self.DESC] = ['Foo', 'Quux']
-        sugg = self.cmd.get_suggestion(self.trans)
+        sugg = self.cmd.get_account(self.trans)
         self.assertEqual(sugg, 'Quux')
 
-    def test_get_suggestion_second_match_returned(self):
+    def test_get_account_second_match_returned(self):
         "two matches, second one is returned"
         self.cmd.journal.description_map[self.DESC] = ['Quux', 'Bork']
-        sugg = self.cmd.get_suggestion(self.trans)
+        sugg = self.cmd.get_account(self.trans)
         self.assertEqual(sugg, 'Bork')
 
 class TestJournal(TestCase):

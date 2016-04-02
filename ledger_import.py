@@ -18,8 +18,9 @@ class LedgerImportCmd(Cmd):
     new_transactions = None
     suggestion = None
     DUPLICATE = 'SKIP DUPLICATE'
+    prompt = 'Enter Account: '
 
-    def get_suggestion(self, trans):
+    def get_account(self, trans):
         possibilities = self.journal.description_map.get(trans.desc, [])
         already_there = [posting.account for posting in trans.postings]
         for p in reversed(possibilities):
@@ -27,35 +28,10 @@ class LedgerImportCmd(Cmd):
                 return p
         return ''
 
-    def skip_initial_dups(self):
-        while self.new_transactions and \
-            self.new_transactions[0].unique_id in self.journal.unique_id_map:
-            dup = self.new_transactions.pop(0)
-            print('SKIPPING DUPLICATE:\n{}'.format(dup))
-
-    def display_next_trans(self):
-        if self.new_transactions:
-            trans = self.new_transactions[0]
-            print('\n' + ('-' * 80))
-            print(str(trans))
-            unique_id = trans.unique_id
-            if unique_id in self.journal.unique_id_map:
-                print('MIGHT BE A DUPLICATE OF: \n\n{}'.format(
-                    self.journal.unique_id_map[unique_id]
-                ))
-                self.suggestion = self.DUPLICATE
-            else:
-                self.suggestion = self.get_suggestion(trans)
-            self.prompt = 'Enter Account [{}]: '.format(self.suggestion)
-        else:
-            print('Done!')
-            self.prompt = 'Control-D to exit:'
-
-    def update_trans(self, acct):
+    def record_transaction(self, trans, acct):
         """Pulls first transaction off the queue, updates the unique id map,
            updates everything with then new transaction details, and updates
            the unique id map again with the updated transaction."""
-        trans = self.new_transactions[0]
         self.journal.unique_id_map[trans.unique_id] = trans
         self.journal.accounts.add(acct)
         self.journal.description_map[trans.desc].append(acct)
@@ -63,25 +39,40 @@ class LedgerImportCmd(Cmd):
         self.journal.transactions.append(trans)
         self.journal.unique_id_map[trans.unique_id] = trans
 
-    def next_trans(self):
-        self.new_transactions.pop(0)
-        self.display_next_trans()
+    def process_transactions(self):
+        "Returns True when there are no transactions left to process"
+        while self.new_transactions:
+            trans = self.new_transactions.pop(0)
+            account = self.get_account(trans)
+
+            # duplicate: skip
+            if trans.unique_id in self.journal.unique_id_map:
+                print('SKIPPING DUPLICATE: {}'.format(trans))
+
+            # matching transaction: update
+            elif account:
+                self.record_transaction(trans, account)
+                print(trans)
+
+            # need user input: break
+            else:
+                print(trans)
+                self.new_transactions.insert(0, trans)
+                return False
+
+        return True
 
     # CMD methods
     def default(self, line):
-        self.update_trans(line)
-        self.next_trans()
+        trans = self.new_transactions.pop(0)
+        self.record_transaction(trans, line)
+        return self.process_transactions()
+
+    def emptyline(self):
+        print('Please enter an account')
 
     def completenames(self, text, line, begidx, endidx):
         return [c for c in self.journal.accounts if c.startswith(text)]
-
-    def emptyline(self):
-        if self.suggestion:
-            if self.suggestion != self.DUPLICATE:
-                self.update_trans(self.suggestion)
-            self.next_trans()
-        else:
-            print('Please enter an account')
 
     def do_EOF(self, line):
         return True
@@ -263,9 +254,9 @@ def main():
     cmd.journal = Journal.parse_file(args.journal)
     cmd.new_transactions = input_parsers[args.input_type].parse_file(args.input)
 
-    cmd.skip_initial_dups()
-    cmd.display_next_trans()
-    cmd.cmdloop()
+    if not cmd.process_transactions():
+        # if process_transactions needs user input, enter command loop
+        cmd.cmdloop()
 
     if not args.output:
         args.output = args.journal + datetime.now().strftime('.%Y-%m-%d')
