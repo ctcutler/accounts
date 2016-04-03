@@ -21,6 +21,10 @@ class LedgerImportCmd(Cmd):
 
     def get_account(self, trans):
         possibilities = self.journal.description_map.get(trans.desc, [])
+        possibilities.extend(
+            regex.account for regex in self.journal.regexes
+            if regex.compiled.match(trans.desc)
+        )
         already_there = [posting.account for posting in trans.postings]
         for p in reversed(possibilities):
             if p not in already_there:
@@ -63,7 +67,7 @@ class LedgerImportCmd(Cmd):
         trans = self.new_transactions.pop(0)
         m = re.match('^(.+)\s*/(.+)/\s*$', line)
         if m:
-            account = m.group(1)
+            account = m.group(1).strip()
             regex = m.group(2)
             desc = trans.desc
             self.journal.regexes.append(AccountRegEx(account, regex))
@@ -71,7 +75,7 @@ class LedgerImportCmd(Cmd):
                 print('WARNING: regex {} does not match {}'.format(regex, desc))
         else:
             account = line
-        self.record_transaction(trans, line)
+        self.record_transaction(trans, account)
         return self.process_transactions()
 
     def emptyline(self):
