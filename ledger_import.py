@@ -3,8 +3,9 @@ from datetime import datetime
 from decimal import Decimal
 from cmd import Cmd
 import csv
+import re
 
-from import_model import Journal, Transaction, Posting
+from import_model import Journal, Transaction, Posting, AccountRegEx
 
 # For tab completion in MacOS X, from:
 # https://pewpewthespells.com/blog/osx_readline.html
@@ -27,9 +28,6 @@ class LedgerImportCmd(Cmd):
         return ''
 
     def record_transaction(self, trans, acct):
-        """Pulls first transaction off the queue, updates the unique id map,
-           updates everything with then new transaction details, and updates
-           the unique id map again with the updated transaction."""
         self.journal.unique_id_map[trans.unique_id] = trans
         self.journal.accounts.add(acct)
         self.journal.description_map[trans.desc].append(acct)
@@ -63,6 +61,16 @@ class LedgerImportCmd(Cmd):
     # CMD methods
     def default(self, line):
         trans = self.new_transactions.pop(0)
+        m = re.match('^(.+)\s*/(.+)/\s*$', line)
+        if m:
+            account = m.group(1)
+            regex = m.group(2)
+            desc = trans.desc
+            self.journal.regexes.append(AccountRegEx(account, regex))
+            if not re.match(regex, desc):
+                print('WARNING: regex {} does not match {}'.format(regex, desc))
+        else:
+            account = line
         self.record_transaction(trans, line)
         return self.process_transactions()
 
