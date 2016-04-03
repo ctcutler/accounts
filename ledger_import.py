@@ -34,7 +34,7 @@ class LedgerImportCmd(Cmd):
     def record_transaction(self, trans, acct):
         self.journal.unique_id_map[trans.unique_id] = trans
         self.journal.accounts.add(acct)
-        self.journal.description_map[trans.desc].append(acct)
+        self.journal.add_desc_to_map(trans.desc, acct)
         trans.postings.append(Posting(account=acct))
         self.journal.transactions.append(trans)
         self.journal.unique_id_map[trans.unique_id] = trans
@@ -82,7 +82,8 @@ class LedgerImportCmd(Cmd):
         print('Please enter an account')
 
     def completenames(self, text, line, begidx, endidx):
-        return [c for c in self.journal.accounts if c.startswith(text)]
+        return [c for c in self.journal.accounts
+            if c.lower().startswith(text.lower())]
 
     def do_EOF(self, line):
         return True
