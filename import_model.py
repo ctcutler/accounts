@@ -88,6 +88,8 @@ class Journal(object):
     # description -> account name
     description_map = None
 
+    ignore_descs = { 'Check W/D' }
+
     def __init__(self, transactions=None, unique_id_map=None, accounts=None, description_map=None, regexes=None):
         self.transactions = transactions or []
         self.unique_id_map = unique_id_map or {}
@@ -101,6 +103,10 @@ class Journal(object):
             '\n'.join(str(regex) for regex in self.regexes),
             '\n'.join(str(t) for t in sorted(self.transactions, key=lambda t: t.date))
         )
+
+    def add_desc_to_map(self, desc, acct):
+        if desc not in self.ignore_descs:
+            self.description_map[desc].append(acct)
 
     @classmethod
     def parse_file(cls, fn):
@@ -153,6 +159,7 @@ class Journal(object):
                     raise Exception('unexpected line: %r' % line)
 
         for trans in transactions:
-            description_map[trans.desc] += [p.account for p in trans.postings]
+            if trans.desc not in Journal.ignore_descs:
+                description_map[trans.desc] += [p.account for p in trans.postings]
 
         return Journal(transactions, unique_id_map, accounts, description_map, regexes)
