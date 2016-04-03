@@ -16,8 +16,7 @@ class LedgerImportCmd(Cmd):
     journal = None
     new_transactions = None
     suggestion = None
-    DUPLICATE = 'SKIP DUPLICATE'
-    prompt = 'Enter Account: '
+    prompt = 'account [/regex/]: '
 
     def get_account(self, trans):
         possibilities = self.journal.description_map.get(trans.desc, [])
@@ -47,7 +46,9 @@ class LedgerImportCmd(Cmd):
 
             # duplicate: skip
             if trans.unique_id in self.journal.unique_id_map:
-                print('SKIPPING DUPLICATE: {}'.format(trans))
+                print('###################')
+                print('SKIPPING DUPLICATE: \n{}'.format(trans))
+                print('###################')
 
             # matching transaction: update
             elif account:
