@@ -1,11 +1,9 @@
 from argparse import ArgumentParser
-from datetime import datetime
-from decimal import Decimal
 from cmd import Cmd
-import csv
 import re
 
 from import_model import Journal, Transaction, Posting, AccountRegEx
+from input_parsers import NecuParser, UsBankParser
 
 # For tab completion in MacOS X, from:
 # https://pewpewthespells.com/blog/osx_readline.html
@@ -90,31 +88,7 @@ class LedgerImportCmd(Cmd):
         return True
 
 
-# FIXME: regular expressions: enter /^Foo\n$/ Expenses:Foo:Bar, store in comments
 # FIXME: consider split transactions (use case: mortgage, auto loan payments), do this by putting quantity after account
-
-class NecuParser(object):
-    @classmethod
-    def make_transaction(cls, parts):
-        desc = parts[3].strip('"')
-        date = datetime.strptime(parts[1], '%m/%d/%y')
-        quantity = Decimal(parts[4])
-        if parts[5] == 'DR':
-            quantity *= -1
-        posting = Posting(account='Assets:NECU:Checking', quantity=quantity)
-        return Transaction(date=date, desc=desc, postings=[posting])
-
-    @classmethod
-    def parse_file(cls, fn):
-        with open(fn) as f:
-            return [
-                cls.make_transaction(parts)
-                for parts in reversed(list(csv.reader(f)))
-                if parts[0] != 'Account Designator'
-            ]
-
-class UsBankParser(object):
-    pass
 
 def main():
     """
