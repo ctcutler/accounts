@@ -88,12 +88,12 @@ class Journal(object):
     # description -> account name
     description_map = None
 
-    def __init__(self, transactions, unique_id_map, accounts, description_map, regexes):
-        self.transactions = transactions
-        self.unique_id_map = unique_id_map
-        self.accounts = accounts
-        self.description_map = description_map
-        self.regexes = regexes
+    def __init__(self, transactions=None, unique_id_map=None, accounts=None, description_map=None, regexes=None):
+        self.transactions = transactions or []
+        self.unique_id_map = unique_id_map or {}
+        self.accounts = accounts or set()
+        self.description_map = description_map or defaultdict(list)
+        self.regexes = regexes or []
 
     def __str__(self):
         return '{}\n\n{}\n\n{}\n'.format(
