@@ -36,14 +36,14 @@ class LedgerImportCmd(Cmd):
         self.journal.transactions.append(trans)
         self.journal.unique_id_map[trans.unique_id] = trans
 
-    def process_transactions(self):
+    def process_transactions(self, skip_duplicates=False):
         "Returns True when there are no transactions left to process"
         while self.new_transactions:
             trans = self.new_transactions.pop(0)
             account = self.get_account(trans)
 
-            # duplicate: skip
-            if trans.unique_id in self.journal.unique_id_map:
+            # duplicate: skip?
+            if skip_duplicates and trans.unique_id in self.journal.unique_id_map:
                 print('###################')
                 print('SKIPPING DUPLICATE: \n{}'.format(trans))
                 print('###################')
@@ -115,7 +115,7 @@ def main():
     cmd.journal = Journal.parse_file(args.journal)
     cmd.new_transactions = input_parsers[args.input_type].parse_file(args.input)
 
-    if not cmd.process_transactions():
+    if not cmd.process_transactions(skip_duplicates=True):
         # if process_transactions needs user input, enter command loop
         cmd.cmdloop()
 
