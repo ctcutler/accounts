@@ -82,7 +82,7 @@ class LedgerImportCmd(Cmd):
 
     def completenames(self, text, line, begidx, endidx):
         return [c for c in self.journal.accounts
-            if c.lower().startswith(text.lower())]
+            if text.lower() in c.lower()]
 
     def do_EOF(self, line):
         return True
