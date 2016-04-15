@@ -24,15 +24,15 @@ class AccountRegEx(object):
 
 class Posting(object):
     account = None
-    quantity = 0
+    quantity = None
 
-    def __init__(self, account=None, quantity=0):
+    def __init__(self, account=None, quantity=None):
         self.account = account
         self.quantity = quantity
 
     def __str__(self):
         s = '  ' + self.account
-        if self.quantity:
+        if self.quantity or self.quantity == 0:
             s += '    $ %s' % self.quantity
         return s
 
@@ -65,10 +65,11 @@ class Transaction(object):
         pos_total = 0
         neg_total = 0
         for posting in sorted(self.postings, key=lambda p: p.account):
-            if posting.quantity > 0:
-                pos_total += posting.quantity
-            else:
-                neg_total += posting.quantity
+            if posting.quantity is not None:
+                if posting.quantity > 0:
+                    pos_total += posting.quantity
+                else:
+                    neg_total += posting.quantity
         s.update(str(max(pos_total, abs(neg_total))).encode('utf-8'))
         return s.hexdigest()
 

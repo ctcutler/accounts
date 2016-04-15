@@ -97,7 +97,7 @@ account Income
         self.assertEqual(posting1.account, 'Assets:NECU:Checking')
         self.assertEqual(posting1.quantity, Decimal('-68.47'))
         self.assertEqual(posting2.account, 'Expenses:Utilities')
-        self.assertEqual(posting2.quantity, 0)
+        self.assertEqual(posting2.quantity, None)
 
         expected_id_map = {'305b039298b2e6319e32e4591e2fa5dd98c5c048': trans}
         self.assertEqual(journal.unique_id_map, expected_id_map)
