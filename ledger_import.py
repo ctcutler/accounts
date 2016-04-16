@@ -3,7 +3,7 @@ from cmd import Cmd
 import re
 
 from import_model import Journal, Transaction, Posting, AccountRegEx
-from input_parsers import NecuParser, UsBankParser
+from input_parsers import NecuParser, NecuSilverLiningParser, UsBankParser
 
 # For tab completion in MacOS X, from:
 # https://pewpewthespells.com/blog/osx_readline.html
@@ -105,6 +105,7 @@ def main():
     """
     input_parsers = {
         'necu': NecuParser,
+        'necusilver': NecuSilverLiningParser,
         'usbank': UsBankParser
     }
     arg_parser = ArgumentParser(
