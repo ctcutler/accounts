@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from hashlib import sha1
 import re
@@ -47,31 +47,8 @@ class Transaction(object):
         self.postings = postings if postings is not None else []
 
     @property
-    def unique_id(self):
-        """ Some thoughts about hashing transactions:
-         * We're trying to guard against duplicates caused by running over the same
-           input file multiple times.
-         * We don't want to omit actual duplicates in the input file.
-         * We want to omit mirror image duplicates, e.g. the lines in the credit
-           union and credit card statements recording the payment of the credit card
-           bill.
-         * Unique key should be based on date and quantity of money moving from
-           account to account
-         * We're going to maintain a collection of all transactions, even new ones and
-           warn the user when a duplicate comes up
-        """
-        s = sha1()
-        s.update(str(self.date).encode('utf-8'))
-        pos_total = 0
-        neg_total = 0
-        for posting in sorted(self.postings, key=lambda p: p.account):
-            if posting.quantity is not None:
-                if posting.quantity > 0:
-                    pos_total += posting.quantity
-                else:
-                    neg_total += posting.quantity
-        s.update(str(max(pos_total, abs(neg_total))).encode('utf-8'))
-        return s.hexdigest()
+    def total(self):
+        return sum(p.quantity for p in self.postings if p.quantity)
 
     def __str__(self):
         return '{} {}\n{}\n'.format(
@@ -84,16 +61,16 @@ class Journal(object):
     transactions = None
     accounts = None
     regexes = None
-    # unique_id -> Transaction
-    unique_id_map = None
     # description -> account name
     description_map = None
+    # most recent transactions with particular total
+    most_recent = None
 
     ignore_descs = { 'Check W/D' }
 
-    def __init__(self, transactions=None, unique_id_map=None, accounts=None, description_map=None, regexes=None):
+    def __init__(self, transactions=None, most_recent=None, accounts=None, description_map=None, regexes=None):
         self.transactions = transactions or []
-        self.unique_id_map = unique_id_map or {}
+        self.most_recent = most_recent or {}
         self.accounts = accounts or set()
         self.description_map = description_map or defaultdict(list)
         self.regexes = regexes or []
@@ -109,10 +86,27 @@ class Journal(object):
         if desc not in self.ignore_descs:
             self.description_map[desc].append(acct)
 
+    def already_imported(self, trans):
+        mr = self.most_recent.get(trans.total)
+        return mr and mr.date == trans.date and mr.desc == trans.desc
+
+    def is_mirror_trans(self, trans):
+        mr = self.most_recent.get(-trans.total)
+
+        if not mr:
+            return False
+
+        threshold = timedelta(days=7)
+        mr_accounts = [p.account for p in mr.postings]
+        trans_accounts = [p.account for p in trans.postings]
+
+        return mr.date + threshold > trans.date and \
+            mr_accounts == trans_accounts[::-1]
+
     @classmethod
     def parse_file(cls, fn):
         transactions = []
-        unique_id_map = {}
+        most_recent = {}
         accounts = set()
         description_map = defaultdict(list)
         regexes = []
@@ -149,12 +143,7 @@ class Journal(object):
                 elif not line.strip():
                     if trans:
                         transactions.append(trans)
-                        if trans.unique_id in unique_id_map:
-                            print('WARNING: {} and {} are duplicates'.format(
-                                str(trans),
-                                str(unique_id_map[trans.unique_id]),
-                            ))
-                        unique_id_map[trans.unique_id] = trans
+                        most_recent[trans.total] = trans
                     trans = None
                 else:
                     raise Exception('unexpected line: %r' % line)
@@ -163,4 +152,4 @@ class Journal(object):
             if trans.desc not in Journal.ignore_descs:
                 description_map[trans.desc] += [p.account for p in trans.postings]
 
-        return Journal(transactions, unique_id_map, accounts, description_map, regexes)
+        return Journal(transactions, most_recent, accounts, description_map, regexes)

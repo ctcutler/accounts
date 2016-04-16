@@ -29,23 +29,29 @@ class LedgerImportCmd(Cmd):
         return ''
 
     def record_transaction(self, trans, acct):
-        self.journal.unique_id_map[trans.unique_id] = trans
+        trans.postings.append(Posting(account=acct))
+
+        # skip if mirror transaction
+        if self.journal.is_mirror_trans(trans):
+            print('###################')
+            print('MIRROR TRANSACTION: \n{}'.format(trans))
+            print('###################')
+            return
+
         self.journal.accounts.add(acct)
         self.journal.add_desc_to_map(trans.desc, acct)
-        trans.postings.append(Posting(account=acct))
         self.journal.transactions.append(trans)
-        self.journal.unique_id_map[trans.unique_id] = trans
 
-    def process_transactions(self, skip_duplicates=False):
+    def process_transactions(self, check_already_imported=False):
         "Returns True when there are no transactions left to process"
         while self.new_transactions:
             trans = self.new_transactions.pop(0)
             account = self.get_account(trans)
 
-            # duplicate: skip?
-            if skip_duplicates and trans.unique_id in self.journal.unique_id_map:
+            # already imported?
+            if check_already_imported and self.journal.already_imported(trans):
                 print('###################')
-                print('SKIPPING DUPLICATE: \n{}'.format(trans))
+                print('ALREADY ENTERED: \n{}'.format(trans))
                 print('###################')
 
             # matching transaction: update
@@ -115,7 +121,7 @@ def main():
     cmd.journal = Journal.parse_file(args.journal)
     cmd.new_transactions = input_parsers[args.input_type].parse_file(args.input)
 
-    if not cmd.process_transactions(skip_duplicates=True):
+    if not cmd.process_transactions(check_already_imported=True):
         # if process_transactions needs user input, enter command loop
         cmd.cmdloop()
 

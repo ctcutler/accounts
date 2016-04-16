@@ -99,65 +99,80 @@ account Income
         self.assertEqual(posting2.account, 'Expenses:Utilities')
         self.assertEqual(posting2.quantity, None)
 
-        expected_id_map = {'305b039298b2e6319e32e4591e2fa5dd98c5c048': trans}
-        self.assertEqual(journal.unique_id_map, expected_id_map)
+        expected_most_recent = {Decimal('-68.47'): trans}
+        self.assertEqual(journal.most_recent, expected_most_recent)
 
         expected_desc_map = defaultdict(list)
         expected_desc_map['FairPoint Communi Bill Pmt W/D'].append('Assets:NECU:Checking')
         expected_desc_map['FairPoint Communi Bill Pmt W/D'].append('Expenses:Utilities')
         self.assertEqual(journal.description_map, expected_desc_map)
 
-class TestTransaction(TestCase):
-    def setUp(self):
-        self.date = datetime(2016, 3, 20)
-        self.desc = 'desc desc desc'
-        self.postings = [
+    def test_already_imported(self):
+        date = datetime(2016, 3, 20)
+        desc = 'desc desc desc'
+        postings = [
             Posting(account='account 1', quantity=Decimal('123.45')),
-            Posting(account='account 2', quantity=0)
+            Posting(account='account 2', quantity=Decimal('-100.00')),
+            Posting(account='account 3', quantity=0)
         ]
-        self.trans1 = Transaction(date=self.date, desc=self.desc, postings=self.postings)
+        trans = Transaction(date=date, desc=desc, postings=postings)
+        journal = Journal([trans], {trans.total: trans})
 
-    def test_unique_id_same(self):
-        "everything is the same, ids are same"
-        trans2 = Transaction(date=self.date, desc=self.desc, postings=self.postings)
-        self.assertEqual(self.trans1.unique_id, trans2.unique_id)
+        # match
+        trans = Transaction(date=date, desc=desc, postings=postings)
+        self.assertTrue(journal.already_imported(trans))
 
-    def test_unique_id_different_dates(self):
-        "dates are different, ids are different"
-        trans2 = Transaction(
-            date=datetime(2016, 3, 20, 1), desc=self.desc, postings=self.postings
-        )
-        self.assertNotEqual(self.trans1.unique_id, trans2.unique_id)
+        # different total
+        trans = Transaction(date=datetime(2016, 3, 21), desc=desc, postings=postings[:1])
+        self.assertFalse(journal.already_imported(trans))
 
-    def test_unique_id_different_descs(self):
-        "descs are different, ids are same"
-        trans2 = Transaction(date=self.date, desc='different', postings=self.postings)
-        self.assertEqual(self.trans1.unique_id, trans2.unique_id)
+        # different date
+        trans = Transaction(date=datetime(2016, 3, 21), desc=desc, postings=postings)
+        self.assertFalse(journal.already_imported(trans))
 
-    def test_unique_id_reversed_postings(self):
-        "posting order reversed, ids are same"
-        trans2 = Transaction(
-            date=self.date, desc='different', postings=reversed(self.postings)
-        )
-        self.assertEqual(self.trans1.unique_id, trans2.unique_id)
+        # different desc
+        trans = Transaction(date=date, desc='foobar', postings=postings)
+        self.assertFalse(journal.already_imported(trans))
 
-    def test_unique_id_reversed_postings(self):
-        "posting amounts are different, ids are different"
-        postings2 = [
-            Posting(account='account 1', quantity=Decimal('234.56')),
-            Posting(account='account 2', quantity=0)
+    def test_is_mirror_trans(self):
+        date = datetime(2016, 3, 20)
+        desc = 'desc desc desc'
+        postings = [
+            Posting(account='account 1', quantity=Decimal('123.45')),
+            Posting(account='account 2', quantity=Decimal('-100.00')),
+            Posting(account='account 3', quantity=0)
         ]
-        trans2 = Transaction(date=self.date, desc='different', postings=postings2)
-        self.assertNotEqual(self.trans1.unique_id, trans2.unique_id)
+        trans = Transaction(date=date, desc=desc, postings=postings)
+        journal = Journal([trans], {trans.total: trans})
 
-    def test_unique_id_opposite_amounts(self):
-        "posting amounts are opposites, ids are same"
-        postings2 = [
-            Posting(account='account 1', quantity=Decimal('-123.45')),
-            Posting(account='account 2', quantity=0)
+        postings = [
+            Posting(account=p.account, quantity=Decimal(str(-p.quantity)))
+            for p in postings
         ]
-        trans2 = Transaction(date=self.date, desc='different', postings=postings2)
-        self.assertEqual(self.trans1.unique_id, trans2.unique_id)
+
+        # match
+        trans = Transaction(date=datetime(2016, 3, 26), desc=desc, postings=postings[::-1])
+        self.assertTrue(journal.is_mirror_trans(trans))
+
+        # time too old
+        trans = Transaction(date=datetime(2016, 3, 27), desc=desc, postings=postings[::-1])
+        self.assertFalse(journal.is_mirror_trans(trans))
+
+        # postings not reversed
+        trans = Transaction(date=datetime(2016, 3, 26), desc=desc, postings=postings)
+        self.assertFalse(journal.is_mirror_trans(trans))
+
+class TestTransaction(TestCase):
+    def test_total(self):
+        date = datetime(2016, 3, 20)
+        desc = 'desc desc desc'
+        postings = [
+            Posting(account='account 1', quantity=Decimal('123.45')),
+            Posting(account='account 2', quantity=Decimal('-100.00')),
+            Posting(account='account 3', quantity=0)
+        ]
+        trans = Transaction(date=date, desc=desc, postings=postings)
+        self.assertEqual(Decimal('23.45'), trans.total)
 
 if __name__ == '__main__':
     unittest_main()
