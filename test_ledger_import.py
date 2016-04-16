@@ -7,7 +7,8 @@ from sys import version_info
 from unittest import TestCase, main as unittest_main
 from unittest.mock import patch, mock_open
 
-from ledger_import import NecuParser, LedgerImportCmd, Journal, Posting, Transaction
+from ledger_import import (NecuParser, LedgerImportCmd, Journal, Posting,
+    Transaction, UsBankParser)
 
 class TestNecuParser(TestCase):
     def test_make_transaction(self):
@@ -29,7 +30,22 @@ class TestNecuParser(TestCase):
         self.assertEqual(trans.postings[0].quantity, Decimal('-68.47'))
 
 class TestUsBankParser(TestCase):
-    pass
+    def test_make_transaction(self):
+        "Creates transaction from U.S. Bank CSV line"
+        parts = [
+            '9/17/2010',
+            'DEBIT',
+            'NFI*WWW.NETFLIX.COM/CC NETFLIX.COM CA',
+            '; 05968; ; ; ; ',
+            '-17.9200'
+        ]
+        trans = UsBankParser.make_transaction(parts)
+        self.assertIsNotNone(trans)
+        self.assertEqual(trans.date, datetime(2010, 9, 17))
+        self.assertEqual(trans.desc, parts[2])
+        self.assertEqual(len(trans.postings), 1)
+        self.assertEqual(trans.postings[0].account, 'Liabilities:Credit Cards:U.S. Bank')
+        self.assertEqual(trans.postings[0].quantity, Decimal('-17.92'))
 
 class TestLedgerImportCmd(TestCase):
     def setUp(self):
