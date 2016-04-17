@@ -7,8 +7,8 @@ from sys import version_info
 from unittest import TestCase, main as unittest_main
 from unittest.mock import patch, mock_open
 
-from ledger_import import (NecuParser, LedgerImportCmd, Journal, Posting,
-    Transaction, UsBankParser)
+from ledger_import import LedgerImportCmd, Journal, Posting, Transaction
+from input_parsers import NecuParser, UsBankParser, AllyParser
 
 class TestNecuParser(TestCase):
     def test_make_transaction(self):
@@ -46,6 +46,26 @@ class TestUsBankParser(TestCase):
         self.assertEqual(len(trans.postings), 1)
         self.assertEqual(trans.postings[0].account, 'Liabilities:Credit Cards:U.S. Bank')
         self.assertEqual(trans.postings[0].quantity, Decimal('-17.92'))
+
+class TestAllyParser(TestCase):
+    def test_make_transaction(self):
+        "Creates transaction from Ally CSV line"
+        parts = [
+            '2016-04-16',
+            '12:34:10',
+            '-82',
+            'Withdrawal',
+            'Bantam Market 793 Bantam Rd B Bantam',
+            'CT',
+            'US'
+        ]
+        trans = AllyParser.make_transaction(parts)
+        self.assertIsNotNone(trans)
+        self.assertEqual(trans.date, datetime(2016, 4, 16))
+        self.assertEqual(trans.desc, parts[4])
+        self.assertEqual(len(trans.postings), 1)
+        self.assertEqual(trans.postings[0].account, 'Assets:Ally:Savings')
+        self.assertEqual(trans.postings[0].quantity, Decimal('-82'))
 
 class TestLedgerImportCmd(TestCase):
     def setUp(self):

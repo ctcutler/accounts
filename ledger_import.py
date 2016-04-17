@@ -3,7 +3,8 @@ from cmd import Cmd
 import re
 
 from import_model import Journal, Transaction, Posting, AccountRegEx
-from input_parsers import NecuParser, NecuSilverLiningParser, UsBankParser
+from input_parsers import (NecuParser, NecuSilverLiningParser, UsBankParser,
+    AllyParser)
 
 # For tab completion in MacOS X, from:
 # https://pewpewthespells.com/blog/osx_readline.html
@@ -104,6 +105,7 @@ def main():
     * when loop exists, write new journal file, to output file
     """
     input_parsers = {
+        'ally': AllyParser,
         'necu': NecuParser,
         'necusilver': NecuSilverLiningParser,
         'usbank': UsBankParser
