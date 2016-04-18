@@ -4,7 +4,7 @@ import re
 
 from import_model import Journal, Transaction, Posting, AccountRegEx
 from input_parsers import (NecuParser, NecuSilverLiningParser, UsBankParser,
-    AllyParser)
+    AllyParser, WellsFargoParser)
 
 # For tab completion in MacOS X, from:
 # https://pewpewthespells.com/blog/osx_readline.html
@@ -30,7 +30,10 @@ class LedgerImportCmd(Cmd):
         return ''
 
     def record_transaction(self, trans, acct):
-        trans.postings.append(Posting(account=acct))
+        if acct:
+            trans.postings.append(Posting(account=acct))
+            self.journal.accounts.add(acct)
+            self.journal.add_desc_to_map(trans.desc, acct)
 
         # skip if mirror transaction
         if self.journal.is_mirror_trans(trans):
@@ -39,8 +42,6 @@ class LedgerImportCmd(Cmd):
             print('###################')
             return
 
-        self.journal.accounts.add(acct)
-        self.journal.add_desc_to_map(trans.desc, acct)
         self.journal.transactions.append(trans)
 
     def process_transactions(self, check_already_imported=False):
@@ -51,9 +52,15 @@ class LedgerImportCmd(Cmd):
 
             # already imported?
             if check_already_imported and self.journal.already_imported(trans):
-                print('###################')
-                print('ALREADY ENTERED: \n{}'.format(trans))
-                print('###################')
+                pass
+                #print('###################')
+                #print('ALREADY ENTERED: \n{}'.format(trans))
+                #print('###################')
+
+            # already has more than 1 posting?
+            elif len(trans.postings) > 1:
+                self.record_transaction(trans, None)
+                print(trans)
 
             # matching transaction: update
             elif account:
@@ -108,7 +115,8 @@ def main():
         'ally': AllyParser,
         'necu': NecuParser,
         'necusilver': NecuSilverLiningParser,
-        'usbank': UsBankParser
+        'usbank': UsBankParser,
+        'wellsfargo': WellsFargoParser
     }
     arg_parser = ArgumentParser(
         description='Parse financial data and add to a ledger journal.'

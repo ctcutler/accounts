@@ -8,7 +8,7 @@ from unittest import TestCase, main as unittest_main
 from unittest.mock import patch, mock_open
 
 from ledger_import import LedgerImportCmd, Journal, Posting, Transaction
-from input_parsers import NecuParser, UsBankParser, AllyParser
+from input_parsers import NecuParser, UsBankParser, AllyParser, WellsFargoParser
 
 class TestNecuParser(TestCase):
     def test_make_transaction(self):
@@ -64,8 +64,30 @@ class TestAllyParser(TestCase):
         self.assertEqual(trans.date, datetime(2016, 4, 16))
         self.assertEqual(trans.desc, parts[4])
         self.assertEqual(len(trans.postings), 1)
-        self.assertEqual(trans.postings[0].account, 'Assets:Ally:Savings')
+        self.assertEqual(trans.postings[0].account, 'Assets:Ally Bank:Savings')
         self.assertEqual(trans.postings[0].quantity, Decimal('-82'))
+
+class TestWellsFargoParser(TestCase):
+    def test_make_transaction(self):
+        "Creates transaction from Wells Fargo line"
+        parts = [
+            '20160408',
+            'Metropolitan West Total Return Bond I',
+            'Asset Fees',
+            '-$6.28',
+            '-0.5783',
+            '$10.8600'
+        ]
+        trans = WellsFargoParser.make_transaction(parts)
+        self.assertIsNotNone(trans)
+        self.assertEqual(trans.date, datetime(2016, 4, 8))
+        self.assertEqual(trans.desc, parts[2])
+        self.assertEqual(len(trans.postings), 2)
+        self.assertEqual(trans.postings[0].account, 'Assets:Wells Fargo:401(k)')
+        self.assertEqual(trans.postings[0].quantity, Decimal(parts[4]))
+        self.assertEqual(trans.postings[0].commodity, 'MWTRX')
+        self.assertEqual(trans.postings[0].unit_price, Decimal('10.8600'))
+        self.assertEqual(trans.postings[1].account, 'Assets:Wells Fargo:401(k)')
 
 class TestLedgerImportCmd(TestCase):
     def setUp(self):
@@ -112,8 +134,12 @@ account Income
 ;this another comment
 2016/02/26 FairPoint Communi Bill Pmt W/D
   ;this a third comment
-  Assets:NECU:Checking $ -68.47
+  Assets:NECU:Checking $-68.47
   Expenses:Utilities
+
+2016/04/08 Asset Fees
+  Assets:Wells Fargo:401(k)  -0.0210 VFIAX @ $188.9800
+  Assets:Wells Fargo:401(k)
 
 """
         with patch.object(builtins, 'open', mock_open(read_data=test_data)):
@@ -123,24 +149,45 @@ account Income
         self.assertIn('Expenses', journal.accounts)
         self.assertIn('Income', journal.accounts)
 
-        self.assertEqual(len(journal.transactions), 1)
-        trans = journal.transactions[0]
-        self.assertEqual(trans.date, datetime(2016, 2, 26))
-        self.assertEqual(trans.desc, 'FairPoint Communi Bill Pmt W/D')
+        self.assertEqual(len(journal.transactions), 2)
 
-        self.assertEqual(len(trans.postings), 2)
-        posting1, posting2 = trans.postings
+        trans1 = journal.transactions[0]
+        self.assertEqual(trans1.date, datetime(2016, 2, 26))
+        self.assertEqual(trans1.desc, 'FairPoint Communi Bill Pmt W/D')
+        self.assertEqual(len(trans1.postings), 2)
+        posting1, posting2 = trans1.postings
         self.assertEqual(posting1.account, 'Assets:NECU:Checking')
         self.assertEqual(posting1.quantity, Decimal('-68.47'))
         self.assertEqual(posting2.account, 'Expenses:Utilities')
         self.assertEqual(posting2.quantity, None)
 
-        expected_most_recent = {Decimal('-68.47'): trans}
-        self.assertEqual(journal.most_recent, expected_most_recent)
+        trans2 = journal.transactions[1]
+        self.assertEqual(trans2.date, datetime(2016, 4, 8))
+        self.assertEqual(trans2.desc, 'Asset Fees')
+        self.assertEqual(len(trans2.postings), 2)
+        posting1, posting2 = trans2.postings
+        self.assertEqual(posting1.account, 'Assets:Wells Fargo:401(k)')
+        self.assertEqual(posting1.quantity, Decimal('-0.0210'))
+        self.assertEqual(posting1.commodity, 'VFIAX')
+        self.assertEqual(posting1.unit_price, Decimal('188.9800'))
+        self.assertEqual(posting2.account, 'Assets:Wells Fargo:401(k)')
+        self.assertEqual(posting2.quantity, None)
+
+        self.assertEqual(
+            journal.by_quantity[Decimal('-68.47')],
+            [trans1]
+        )
+        self.assertEqual(
+            journal.by_quantity[Decimal('-0.0210')],
+            [trans2]
+        )
+        self.assertEqual(len(journal.by_quantity), 2)
 
         expected_desc_map = defaultdict(list)
         expected_desc_map['FairPoint Communi Bill Pmt W/D'].append('Assets:NECU:Checking')
         expected_desc_map['FairPoint Communi Bill Pmt W/D'].append('Expenses:Utilities')
+        expected_desc_map['Asset Fees'].append('Assets:Wells Fargo:401(k)')
+        expected_desc_map['Asset Fees'].append('Assets:Wells Fargo:401(k)')
         self.assertEqual(journal.description_map, expected_desc_map)
 
     def test_already_imported(self):
@@ -152,7 +199,9 @@ account Income
             Posting(account='account 3', quantity=0)
         ]
         trans = Transaction(date=date, desc=desc, postings=postings)
-        journal = Journal([trans], {trans.total: trans})
+        by_quantity = defaultdict(list)
+        by_quantity[trans.total].append(trans)
+        journal = Journal([trans], by_quantity)
 
         # match
         trans = Transaction(date=date, desc=desc, postings=postings)
@@ -179,7 +228,9 @@ account Income
             Posting(account='account 3', quantity=0)
         ]
         trans = Transaction(date=date, desc=desc, postings=postings)
-        journal = Journal([trans], {trans.total: trans})
+        by_quantity = defaultdict(list)
+        by_quantity[trans.total].append(trans)
+        journal = Journal([trans], by_quantity)
 
         postings = [
             Posting(account=p.account, quantity=Decimal(str(-p.quantity)))

@@ -25,16 +25,27 @@ class AccountRegEx(object):
 class Posting(object):
     account = None
     quantity = None
+    commodity = None
+    unit_price = None
 
-    def __init__(self, account=None, quantity=None):
+    def __init__(self, account=None, quantity=None, commodity='$', unit_price=None):
         self.account = account
         self.quantity = quantity
+        self.commodity = commodity
+        self.unit_price = unit_price
 
     def __str__(self):
-        s = '  ' + self.account
-        if self.quantity or self.quantity == 0:
-            s += '    $ %s' % self.quantity
-        return s
+        if self.commodity != '$':
+            # account and quantity in commodity with dollars unit price
+            return '  {}    {} {} @ ${}'.format(
+                self.account, self.quantity, self.commodity, self.unit_price
+            )
+        elif self.quantity or self.quantity == 0:
+            # account and quantity in dollars
+            return '  {}    ${}'.format(self.account, self.quantity)
+        else:
+            # account only
+            return '  {}'.format(self.account)
 
 class Transaction(object):
     date = None
@@ -64,13 +75,13 @@ class Journal(object):
     # description -> account name
     description_map = None
     # most recent transactions with particular total
-    most_recent = None
+    by_quantity = None
 
     ignore_descs = { 'Check W/D' }
 
-    def __init__(self, transactions=None, most_recent=None, accounts=None, description_map=None, regexes=None):
+    def __init__(self, transactions=None, by_quantity=None, accounts=None, description_map=None, regexes=None):
         self.transactions = transactions or []
-        self.most_recent = most_recent or {}
+        self.by_quantity = by_quantity or defaultdict(list)
         self.accounts = accounts or set()
         self.description_map = description_map or defaultdict(list)
         self.regexes = regexes or []
@@ -87,26 +98,35 @@ class Journal(object):
             self.description_map[desc].append(acct)
 
     def already_imported(self, trans):
-        mr = self.most_recent.get(trans.total)
-        return mr and mr.date == trans.date and mr.desc == trans.desc
+        matching_quantity = self.by_quantity.get(trans.total, [])
+        return len([
+            mq for mq in matching_quantity
+            if mq.date == trans.date and mq.desc == trans.desc
+        ]) > 0
 
     def is_mirror_trans(self, trans):
-        mr = self.most_recent.get(-trans.total)
+        matching_quantity = self.by_quantity.get(-trans.total, [])
 
-        if not mr:
-            return False
+        for mq in matching_quantity:
+            threshold = timedelta(days=7)
+            mq_accounts = [p.account for p in mq.postings]
+            trans_accounts = [p.account for p in trans.postings]
 
-        threshold = timedelta(days=7)
-        mr_accounts = [p.account for p in mr.postings]
-        trans_accounts = [p.account for p in trans.postings]
+            # mirror transactions occur when:
+            # - there is more than one account involved
+            # - it is within the date threshold
+            # - it has the same account postings in reverse order
+            if len(set(mq_accounts)) > 1 and \
+                mq.date + threshold > trans.date and \
+                mq_accounts == trans_accounts[::-1]:
+                return True
 
-        return mr.date + threshold > trans.date and \
-            mr_accounts == trans_accounts[::-1]
+        return False
 
     @classmethod
     def parse_file(cls, fn):
         transactions = []
-        most_recent = {}
+        by_quantity = defaultdict(list)
         accounts = set()
         description_map = defaultdict(list)
         regexes = []
@@ -135,15 +155,32 @@ class Journal(object):
                     pass # ignore
                 elif re.match(posting_re, line):
                     posting = Posting()
-                    parts = line.split('$', 1)
-                    posting.account = parts[0].strip()
-                    if len(parts) == 2:
-                        posting.quantity = Decimal(parts[1].strip().replace(',', ''))
+                    parts = [p.strip(' $') for p in line.split()]
+
+                    # ACCT  QUANTITY COMMODITY @ $UNIT_PRICE'
+                    if '@' in line:
+                        # account might have spaces in it
+                        posting.account = ' '.join(parts[:-4])
+                        posting.quantity = Decimal(parts[-4])
+                        posting.commodity = parts[-3]
+                        posting.unit_price = Decimal(parts[-1])
+
+                    # ACCT $QUANTITY
+                    elif '$' in line:
+                        # account might have spaces in it
+                        posting.account = ' '.join(parts[:-1])
+                        posting.quantity = Decimal(parts[-1])
+
+                    #  ACCT
+                    else:
+                        # account might have spaces in it
+                        posting.account = ' '.join(parts)
+
                     trans.postings.append(posting)
                 elif not line.strip():
                     if trans:
                         transactions.append(trans)
-                        most_recent[trans.total] = trans
+                        by_quantity[trans.total].append(trans)
                     trans = None
                 else:
                     raise Exception('unexpected line: %r' % line)
@@ -152,4 +189,4 @@ class Journal(object):
             if trans.desc not in Journal.ignore_descs:
                 description_map[trans.desc] += [p.account for p in trans.postings]
 
-        return Journal(transactions, most_recent, accounts, description_map, regexes)
+        return Journal(transactions, by_quantity, accounts, description_map, regexes)
