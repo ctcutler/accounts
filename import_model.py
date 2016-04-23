@@ -36,10 +36,16 @@ class Posting(object):
 
     def __str__(self):
         if self.commodity != '$':
-            # account and quantity in commodity with dollars unit price
-            return '  {}    {} {} @ ${}'.format(
-                self.account, self.quantity, self.commodity, self.unit_price
-            )
+            if self.unit_price:
+                # account and quantity in commodity with dollars unit price
+                return '  {}    {} {} @ ${}'.format(
+                    self.account, self.quantity, self.commodity, self.unit_price
+                )
+            else:
+                # account and quantity in commodity
+                return '  {}    {} {}'.format(
+                    self.account, self.quantity, self.commodity
+                )
         elif self.quantity or self.quantity == 0:
             # account and quantity in dollars
             return '  {}    ${}'.format(self.account, self.quantity)
@@ -170,6 +176,13 @@ class Journal(object):
                         # account might have spaces in it
                         posting.account = ' '.join(parts[:-1])
                         posting.quantity = Decimal(parts[-1])
+
+                    # ACCT  QUANTITY COMMODITY
+                    elif '  ' in line.lstrip():
+                        # account might have spaces in it
+                        posting.account = ' '.join(parts[:-2])
+                        posting.quantity = Decimal(parts[-2])
+                        posting.commodity = parts[-1]
 
                     #  ACCT
                     else:

@@ -8,10 +8,11 @@ from unittest import TestCase, main as unittest_main
 from unittest.mock import patch, mock_open
 
 from ledger_import import LedgerImportCmd, Journal, Posting, Transaction
-from input_parsers import NecuParser, UsBankParser, AllyParser, WellsFargoParser
+from input_parsers import (NecuParser, UsBankParser, AllyParser, WellsFargoParser,
+    BpasParser)
 
 class TestNecuParser(TestCase):
-    def test_make_transaction(self):
+    def test_make_transactions(self):
         "Creates transaction from NECU CSV line"
         parts = [
             '0056531888 S02',
@@ -21,7 +22,7 @@ class TestNecuParser(TestCase):
             '000000068.47',
             'DR'
         ]
-        trans = NecuParser.make_transaction(parts)
+        trans = NecuParser.make_transactions(parts)[0]
         self.assertIsNotNone(trans)
         self.assertEqual(trans.date, datetime(2016, 2, 26))
         self.assertEqual(trans.desc, parts[3])
@@ -30,7 +31,7 @@ class TestNecuParser(TestCase):
         self.assertEqual(trans.postings[0].quantity, Decimal('-68.47'))
 
 class TestUsBankParser(TestCase):
-    def test_make_transaction(self):
+    def test_make_transactions(self):
         "Creates transaction from U.S. Bank CSV line"
         parts = [
             '9/17/2010',
@@ -39,7 +40,7 @@ class TestUsBankParser(TestCase):
             '; 05968; ; ; ; ',
             '-17.9200'
         ]
-        trans = UsBankParser.make_transaction(parts)
+        trans = UsBankParser.make_transactions(parts)[0]
         self.assertIsNotNone(trans)
         self.assertEqual(trans.date, datetime(2010, 9, 17))
         self.assertEqual(trans.desc, parts[2])
@@ -48,7 +49,7 @@ class TestUsBankParser(TestCase):
         self.assertEqual(trans.postings[0].quantity, Decimal('-17.92'))
 
 class TestAllyParser(TestCase):
-    def test_make_transaction(self):
+    def test_make_transactions(self):
         "Creates transaction from Ally CSV line"
         parts = [
             '2016-04-16',
@@ -59,7 +60,7 @@ class TestAllyParser(TestCase):
             'CT',
             'US'
         ]
-        trans = AllyParser.make_transaction(parts)
+        trans = AllyParser.make_transactions(parts)[0]
         self.assertIsNotNone(trans)
         self.assertEqual(trans.date, datetime(2016, 4, 16))
         self.assertEqual(trans.desc, parts[4])
@@ -68,7 +69,7 @@ class TestAllyParser(TestCase):
         self.assertEqual(trans.postings[0].quantity, Decimal('-82'))
 
 class TestWellsFargoParser(TestCase):
-    def test_make_transaction(self):
+    def test_make_transactions(self):
         "Creates transaction from Wells Fargo line"
         parts = [
             '20160408',
@@ -78,16 +79,51 @@ class TestWellsFargoParser(TestCase):
             '-0.5783',
             '$10.8600'
         ]
-        trans = WellsFargoParser.make_transaction(parts)
-        self.assertIsNotNone(trans)
-        self.assertEqual(trans.date, datetime(2016, 4, 8))
-        self.assertEqual(trans.desc, parts[2])
-        self.assertEqual(len(trans.postings), 2)
-        self.assertEqual(trans.postings[0].account, 'Assets:Wells Fargo:401(k)')
-        self.assertEqual(trans.postings[0].quantity, Decimal(parts[4]))
-        self.assertEqual(trans.postings[0].commodity, 'MWTRX')
-        self.assertEqual(trans.postings[0].unit_price, Decimal('10.8600'))
-        self.assertEqual(trans.postings[1].account, 'Assets:Wells Fargo:401(k)')
+        transactions = WellsFargoParser.make_transactions(parts)
+        self.assertEqual(len(transactions), 2)
+        trans1 = transactions[0]
+        trans2 = transactions[1]
+
+        self.assertEqual(trans1.date, datetime(2016, 4, 8))
+        self.assertEqual(trans1.desc, 'Sell MWTRX for fees')
+        self.assertEqual(len(trans1.postings), 2)
+        self.assertEqual(trans1.postings[0].account, 'Assets:Wells Fargo:401(k)')
+        self.assertEqual(trans1.postings[0].quantity, Decimal(parts[4]))
+        self.assertEqual(trans1.postings[0].commodity, 'MWTRX')
+        self.assertEqual(trans1.postings[0].unit_price, Decimal('10.8600'))
+        self.assertEqual(trans1.postings[1].account, 'Assets:Wells Fargo:401(k)')
+
+        self.assertEqual(trans2.date, datetime(2016, 4, 8))
+        self.assertEqual(trans2.desc, 'Pay fees')
+        self.assertEqual(len(trans2.postings), 2)
+        self.assertEqual(trans2.postings[0].account, 'Assets:Wells Fargo:401(k)')
+        self.assertEqual(trans2.postings[0].quantity, Decimal('-6.28033800'))
+        self.assertEqual(trans2.postings[1].account, 'Expenses:Retirement Account Fees')
+
+class TestBpasParser(TestCase):
+    def test_make_transactions(self):
+        "Creates transaction from Wells Fargo line"
+        parts = '04/14/2016  VANGUARD 500 INDEX ADMIRAL SER  Contribution  N/A EMPLOYEE PRETAX 1.5475    $192.28   $297.56'.split()
+        transactions = BpasParser.make_transactions(parts)
+        self.assertEqual(len(transactions), 2)
+        trans1 = transactions[0]
+        trans2 = transactions[1]
+
+        self.assertEqual(trans1.date, datetime(2016, 4, 14))
+        self.assertEqual(trans1.desc, 'Cash from Contribution')
+        self.assertEqual(len(trans1.postings), 2)
+        self.assertEqual(trans1.postings[0].account, 'Assets:BPAS:401(k)')
+        self.assertEqual(trans1.postings[0].quantity, Decimal('297.553300'))
+        self.assertEqual(trans1.postings[1].account, 'Income:Retirement Contributions')
+
+        self.assertEqual(trans2.date, datetime(2016, 4, 14))
+        self.assertEqual(trans2.desc, 'Buy VFIAX with cash from Contribution')
+        self.assertEqual(len(trans2.postings), 2)
+        self.assertEqual(trans2.postings[0].account, 'Assets:BPAS:401(k)')
+        self.assertEqual(trans2.postings[0].quantity, Decimal(parts[10]))
+        self.assertEqual(trans2.postings[0].commodity, 'VFIAX')
+        self.assertEqual(trans2.postings[0].unit_price, Decimal('192.28'))
+        self.assertEqual(trans2.postings[1].account, 'Assets:BPAS:401(k)')
 
 class TestLedgerImportCmd(TestCase):
     def setUp(self):
