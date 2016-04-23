@@ -5,3 +5,6 @@ __pycache__/
 
 # symlink to accounts-data repo
 data
+
+# vim swap files
+*.swp

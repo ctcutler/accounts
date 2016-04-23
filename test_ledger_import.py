@@ -9,7 +9,7 @@ from unittest.mock import patch, mock_open
 
 from ledger_import import LedgerImportCmd, Journal, Posting, Transaction
 from input_parsers import (NecuParser, UsBankParser, AllyParser, WellsFargoParser,
-    BpasParser)
+    BpasParser, TiaaCrefParser)
 
 class TestNecuParser(TestCase):
     def test_make_transactions(self):
@@ -67,6 +67,40 @@ class TestAllyParser(TestCase):
         self.assertEqual(len(trans.postings), 1)
         self.assertEqual(trans.postings[0].account, 'Assets:Ally Bank:Savings')
         self.assertEqual(trans.postings[0].quantity, Decimal('-82'))
+
+class TestTiaaCrefParser(TestCase):
+    def test_make_transactions(self):
+        "Creates transaction from TIAA CREF line"
+        parts = [
+            '4/8/2016',
+            '380737G1 GR1001 102136',
+            'Buy',
+            'CREF Equity Index R3',
+            '162.4489',
+            '2.4237',
+            '393.73',
+            'Contribution'
+        ]
+        transactions = TiaaCrefParser.make_transactions(parts)
+        self.assertEqual(len(transactions), 2)
+        trans1 = transactions[0]
+        trans2 = transactions[1]
+
+        self.assertEqual(trans1.date, datetime(2016, 4, 8))
+        self.assertEqual(trans1.desc, 'Cash from Contribution')
+        self.assertEqual(len(trans1.postings), 2)
+        self.assertEqual(trans1.postings[0].account, 'Assets:TIAA CREF:403(b)')
+        self.assertEqual(trans1.postings[0].quantity, Decimal('393.72739893'))
+        self.assertEqual(trans1.postings[1].account, 'Income:Retirement Contributions')
+
+        self.assertEqual(trans2.date, datetime(2016, 4, 8))
+        self.assertEqual(trans2.desc, 'Buy QCEQIX with cash from Contribution')
+        self.assertEqual(len(trans2.postings), 2)
+        self.assertEqual(trans2.postings[0].account, 'Assets:TIAA CREF:403(b)')
+        self.assertEqual(trans2.postings[0].quantity, Decimal(parts[5]))
+        self.assertEqual(trans2.postings[0].commodity, 'QCEQIX')
+        self.assertEqual(trans2.postings[0].unit_price, Decimal('162.4489'))
+        self.assertEqual(trans2.postings[1].account, 'Assets:TIAA CREF:403(b)')
 
 class TestWellsFargoParser(TestCase):
     def test_make_transactions(self):
