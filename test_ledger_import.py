@@ -9,7 +9,7 @@ from unittest.mock import patch, mock_open
 
 from ledger_import import LedgerImportCmd, Journal, Posting, Transaction
 from input_parsers import (NecuParser, UsBankParser, AllyParser, WellsFargoParser,
-    BpasParser, TiaaCrefParser)
+    BpasParser, TiaaCrefParser, AmmVanguardParser)
 
 class TestNecuParser(TestCase):
     def test_make_transactions(self):
@@ -101,6 +101,42 @@ class TestTiaaCrefParser(TestCase):
         self.assertEqual(trans2.postings[0].commodity, 'QCEQIX')
         self.assertEqual(trans2.postings[0].unit_price, Decimal('162.4489'))
         self.assertEqual(trans2.postings[1].account, 'Assets:TIAA CREF:403(b)')
+
+class TestAmmVanguardParser(TestCase):
+    def test_make_transactions(self):
+        "Creates transaction from AMM Vanguard line"
+        parts = [
+            '88037141475',
+            '10/31/2014',
+            '10/31/2014',
+            'Distribution',
+            'INCOME DIVIDEND',
+            'Total Bond Mkt Index Inv',
+            '10.86',
+            '1.012',
+            '10.99',
+            '10.99',
+        ]
+        transactions = AmmVanguardParser.make_transactions(parts)
+        self.assertEqual(len(transactions), 2)
+        trans1 = transactions[0]
+        trans2 = transactions[1]
+
+        self.assertEqual(trans1.date, datetime(2014, 10, 31))
+        self.assertEqual(trans1.desc, 'Cash from Distribution')
+        self.assertEqual(len(trans1.postings), 2)
+        self.assertEqual(trans1.postings[0].account, 'Assets:Vanguard:AMM Roth IRA')
+        self.assertEqual(trans1.postings[0].quantity, Decimal('10.99032'))
+        self.assertEqual(trans1.postings[1].account, 'Income:Dividends')
+
+        self.assertEqual(trans2.date, datetime(2014, 10, 31))
+        self.assertEqual(trans2.desc, 'Buy VBMFX with cash from Distribution')
+        self.assertEqual(len(trans2.postings), 2)
+        self.assertEqual(trans2.postings[0].account, 'Assets:Vanguard:AMM Roth IRA')
+        self.assertEqual(trans2.postings[0].quantity, Decimal(parts[7]))
+        self.assertEqual(trans2.postings[0].commodity, 'VBMFX')
+        self.assertEqual(trans2.postings[0].unit_price, Decimal('10.86'))
+        self.assertEqual(trans2.postings[1].account, 'Assets:Vanguard:AMM Roth IRA')
 
 class TestWellsFargoParser(TestCase):
     def test_make_transactions(self):
