@@ -22,6 +22,23 @@ class AccountRegEx(object):
         _, regex, account = [part.strip() for part in line.split('/', 3)]
         return AccountRegEx(account, regex)
 
+class Price(object):
+    date = None
+    commodity = None
+    value = None
+
+    def __init__(self, date, commodity, value):
+        self.date = date
+        self.commodity = commodity
+        self.value = value
+
+    def __str__(self):
+        return 'P {} {} ${}'.format(
+            self.date.strftime('%Y/%m/%d %H:%M:%S'),
+            self.commodity,
+            self.value
+        )
+
 class Posting(object):
     account = None
     quantity = None
@@ -78,6 +95,7 @@ class Journal(object):
     transactions = None
     accounts = None
     regexes = None
+    prices = None
     # description -> account name
     description_map = None
     # most recent transactions with particular total
@@ -85,19 +103,21 @@ class Journal(object):
 
     ignore_descs = { 'Check W/D' }
 
-    def __init__(self, transactions=None, by_quantity=None, accounts=None, description_map=None, regexes=None):
+    def __init__(self, transactions=None, by_quantity=None, accounts=None, description_map=None, regexes=None, prices=None):
         self.transactions = transactions or []
         self.by_quantity = by_quantity or defaultdict(list)
         self.accounts = accounts or set()
         self.description_map = description_map or defaultdict(list)
         self.regexes = regexes or []
+        self.prices = prices or []
 
     def __str__(self):
-        return '{}\n\n{}\n\n{}\n'.format(
+        return '\n\n'.join([
             '\n'.join('account '+ a for a in sorted(self.accounts)),
+            '\n'.join(str(price) for price in self.prices),
             '\n'.join(str(regex) for regex in self.regexes),
             '\n'.join(str(t) for t in sorted(self.transactions, key=lambda t: t.date))
-        )
+        ]) + '\n'
 
     def add_desc_to_map(self, desc, acct):
         if desc not in self.ignore_descs:
@@ -136,12 +156,14 @@ class Journal(object):
         accounts = set()
         description_map = defaultdict(list)
         regexes = []
+        prices = []
 
         trans = None
 
         account_re = re.compile('^account')
         date_desc_re = re.compile('^\d')
         posting_re = re.compile('^\s+\S+')
+        price_re = re.compile('^P\s.+')
         regex_comment_re = re.compile('^\s*;.*/.+/')
         comment_re = re.compile('^\s*;')
 
@@ -157,6 +179,12 @@ class Journal(object):
                     trans.desc = parts[1]
                 elif re.match(regex_comment_re, line):
                     regexes.append(AccountRegEx.parse(line))
+                elif re.match(price_re, line):
+                    parts = line.split()
+                    date = datetime.strptime(parts[1], '%Y/%m/%d')
+                    commodity = parts[3]
+                    value = Decimal(parts[4].lstrip('$'))
+                    prices.append(Price(date, commodity, value))
                 elif re.match(comment_re, line):
                     pass # ignore
                 elif re.match(posting_re, line):
@@ -202,4 +230,4 @@ class Journal(object):
             if trans.desc not in Journal.ignore_descs:
                 description_map[trans.desc] += [p.account for p in trans.postings]
 
-        return Journal(transactions, by_quantity, accounts, description_map, regexes)
+        return Journal(transactions, by_quantity, accounts, description_map, regexes, prices)
