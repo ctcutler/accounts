@@ -22,6 +22,16 @@ class AccountRegEx(object):
         _, regex, account = [part.strip() for part in line.split('/', 3)]
         return AccountRegEx(account, regex)
 
+class Commodity(object):
+    name = None
+
+    def __init__(self, name):
+        print('commodity name '+name)
+        self.name = name
+
+    def __str__(self):
+        return 'commodity '+self.name
+
 class Price(object):
     date = None
     commodity = None
@@ -100,20 +110,24 @@ class Journal(object):
     description_map = None
     # most recent transactions with particular total
     by_quantity = None
+    commodities = None
 
     ignore_descs = { 'Check W/D' }
 
-    def __init__(self, transactions=None, by_quantity=None, accounts=None, description_map=None, regexes=None, prices=None):
+    def __init__(self, transactions=None, by_quantity=None, accounts=None, description_map=None,
+        regexes=None, prices=None, commodities=None):
         self.transactions = transactions or []
         self.by_quantity = by_quantity or defaultdict(list)
         self.accounts = accounts or set()
         self.description_map = description_map or defaultdict(list)
         self.regexes = regexes or []
         self.prices = prices or []
+        self.commodities = commodities or []
 
     def __str__(self):
         return '\n\n'.join([
             '\n'.join('account '+ a for a in sorted(self.accounts)),
+            '\n'.join(str(commodity) for commodity in self.commodities),
             '\n'.join(str(price) for price in self.prices),
             '\n'.join(str(regex) for regex in self.regexes),
             '\n'.join(str(t) for t in sorted(self.transactions, key=lambda t: t.date))
@@ -157,6 +171,7 @@ class Journal(object):
         description_map = defaultdict(list)
         regexes = []
         prices = []
+        commodities = []
 
         trans = None
 
@@ -164,6 +179,7 @@ class Journal(object):
         date_desc_re = re.compile('^\d')
         posting_re = re.compile('^\s+\S+')
         price_re = re.compile('^P\s.+')
+        commodity_re = re.compile('^commodity\s.+')
         regex_comment_re = re.compile('^\s*;.*/.+/')
         comment_re = re.compile('^\s*;')
 
@@ -185,6 +201,11 @@ class Journal(object):
                     commodity = parts[3]
                     value = Decimal(parts[4].lstrip('$'))
                     prices.append(Price(date, commodity, value))
+                elif re.match(commodity_re, line):
+                    parts = line.split()
+                    print('commodity parts '+repr(parts))
+                    name = parts[1]
+                    commodities.append(Commodity(name))
                 elif re.match(comment_re, line):
                     pass # ignore
                 elif re.match(posting_re, line):
@@ -230,4 +251,5 @@ class Journal(object):
             if trans.desc not in Journal.ignore_descs:
                 description_map[trans.desc] += [p.account for p in trans.postings]
 
-        return Journal(transactions, by_quantity, accounts, description_map, regexes, prices)
+        return Journal(transactions, by_quantity, accounts, description_map, regexes,
+            prices, commodities)
