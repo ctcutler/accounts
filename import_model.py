@@ -26,7 +26,6 @@ class Commodity(object):
     name = None
 
     def __init__(self, name):
-        print('commodity name '+name)
         self.name = name
 
     def __str__(self):
@@ -203,7 +202,6 @@ class Journal(object):
                     prices.append(Price(date, commodity, value))
                 elif re.match(commodity_re, line):
                     parts = line.split()
-                    print('commodity parts '+repr(parts))
                     name = parts[1]
                     commodities.append(Commodity(name))
                 elif re.match(comment_re, line):
