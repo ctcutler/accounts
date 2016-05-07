@@ -147,7 +147,7 @@ class Journal(object):
         matching_quantity = self.by_quantity.get(-trans.total, [])
 
         for mq in matching_quantity:
-            threshold = timedelta(days=7)
+            threshold = timedelta(days=14)
             mq_accounts = [p.account for p in mq.postings]
             trans_accounts = [p.account for p in trans.postings]
 

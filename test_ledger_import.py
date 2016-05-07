@@ -344,15 +344,15 @@ account Income
         ]
 
         # match
-        trans = Transaction(date=datetime(2016, 3, 26), desc=desc, postings=postings[::-1])
+        trans = Transaction(date=datetime(2016, 4, 2), desc=desc, postings=postings[::-1])
         self.assertTrue(journal.is_mirror_trans(trans))
 
         # time too old
-        trans = Transaction(date=datetime(2016, 3, 27), desc=desc, postings=postings[::-1])
+        trans = Transaction(date=datetime(2016, 4, 3), desc=desc, postings=postings[::-1])
         self.assertFalse(journal.is_mirror_trans(trans))
 
         # postings not reversed
-        trans = Transaction(date=datetime(2016, 3, 26), desc=desc, postings=postings)
+        trans = Transaction(date=datetime(2016, 4, 2), desc=desc, postings=postings)
         self.assertFalse(journal.is_mirror_trans(trans))
 
 class TestTransaction(TestCase):
