@@ -39,10 +39,10 @@ gulp test
 * browserify passes the javascript through babelify to convert it from ES2015 to ES5 before bundling
 
 References:
-http://busypeoples.github.io/post/testing-workflow-with-es6/
-https://github.com/Nikku/karma-browserify
-https://github.com/babel/babelify
-https://github.com/karma-runner/gulp-karma
+* http://busypeoples.github.io/post/testing-workflow-with-es6/
+* https://github.com/Nikku/karma-browserify
+* https://github.com/babel/babelify
+* https://github.com/karma-runner/gulp-karma
 
 See http://jpsierens.com/tutorial-gulp-javascript-2015-react/ for ideas about how to get ES6/React going
 (which conveniently uses browserify and babelify).
