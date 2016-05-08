@@ -3,7 +3,12 @@ Tools for managing ledger-based accounting
 
 Import data from <account>:
 ```
-python3 ./ledger_import.py -j data/accounts.dat -i <account>.csv -t <account>
+python3 py/ledger_import.py -j data/accounts.dat -i <account>.csv -t <account>
+```
+
+Run unit tests:
+```
+python3 py/test_ledger_import.py
 ```
 
 Show all balances:
