@@ -8,3 +8,6 @@ data
 
 # vim swap files
 *.swp
+
+# js stuff
+node_modules
