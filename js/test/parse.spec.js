@@ -1,8 +1,8 @@
 import { parseTransaction } from '../src/parse';
 
 const input = `2014/02/14 foo bar
-  Assets:TIAA CREF:403(b)    $288.10558392
-  Income:Retirement Contributions`;
+  Assets:Some Account:Sub-Account    $288.10558392
+  Income:Some Other Account`;
 
 describe('parseTransaction', function () {
 
