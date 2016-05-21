@@ -1,4 +1,3 @@
-var fp = require('lodash/fp');
 var _ = require('lodash');
 var splitOnce = c => s =>
   [ s.substring(0, s.indexOf(c)), s.substring(s.indexOf(c)+1) ];
@@ -18,7 +17,7 @@ const fpSplitN = (splitter, canSplit, maxSplits, s) =>
       )
     : s;
 
-export const splitN = (splitOn, maxSplits, s) =>
+export const splitN = (splitOn, maxSplits) => s =>
   fpSplitN(
     splitOnce(splitOn),
     includes(splitOn),

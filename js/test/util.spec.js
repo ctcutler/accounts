@@ -6,7 +6,7 @@ describe('splitN', function () {
 
   it('should split on the split character', function () {
     expect(
-      splitN(splitOn, 2, input).join(splitOn)
+      splitN(splitOn, 2)(input).join(splitOn)
     ).toEqual(
       input
     );
@@ -15,7 +15,7 @@ describe('splitN', function () {
   it('should split no more than N times', function () {
     const maxSplits = 1
     expect(
-      splitN(splitOn, maxSplits, input).length
+      splitN(splitOn, maxSplits)(input).length
     ).toEqual(
       maxSplits+1
     );
@@ -24,7 +24,7 @@ describe('splitN', function () {
   it('can split fewer than N times', function () {
     const maxSplits = 47
     expect(
-      splitN(splitOn, maxSplits, input).length
+      splitN(splitOn, maxSplits)(input).length
     ).toBeLessThan(
       maxSplits
     );
