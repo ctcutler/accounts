@@ -22,4 +22,20 @@ describe('parseTransaction', function () {
     );
   });
 
+  it('should parse the posting accounts correctly', function () {
+    expect(
+      parseTransaction(input).postings.map(v => v.name)
+    ).toEqual(
+      ['Assets:Some Account:Sub-Account', 'Income:Some Other Account']
+    );
+  });
+
+//  it('should parse the posting quantities correctly', function () {
+//    expect(
+//      parseTransaction(input).postings.map(v => v.quantity)
+//    ).toEqual(
+//      [288.10558392, undefined]
+//    );
+//  });
+
 });
