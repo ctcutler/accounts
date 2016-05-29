@@ -1,11 +1,11 @@
 var fp = require('lodash/fp');
-import { splitN } from './util';
+import { splitN, trace } from './util';
 
 export const parseTransaction = input => {
   let [date, desc] = fp.flow(
     fp.split('\n'),
     fp.first,
-    splitN(' ', 1)
+    splitN(' ')(1)
   )(input);
 
   return {

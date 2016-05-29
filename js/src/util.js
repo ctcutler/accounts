@@ -1,26 +1,22 @@
-var _ = require('lodash');
-var splitOnce = c => s =>
-  [ s.substring(0, s.indexOf(c)), s.substring(s.indexOf(c)+1) ];
+const fp = require('lodash/fp');
 
+const flatMapNoCap = fp.flatMap.convert({ 'cap': false });
 const includes = c => s => s.includes(c);
+const substring = x => y => s => s.substring(x, y);
+const indexOf = c => s => s.indexOf(c);
+const splitLeft = c => s => substring(0)(indexOf(c)(s))(s);
+const splitRight = c => s => substring(indexOf(c)(s)+1)(s.length)(s);
+const splitOnce = c => s => [splitLeft(c)(s), splitRight(c)(s)]
 
-const fpSplitN = (splitter, canSplit, maxSplits, s) =>
-  maxSplits > 0 && canSplit(s)
-    ? _.reduce(
-        splitter(s),
-        (acc, val, i) =>
-          _.concat(
-            acc,
-            i === 0 ? val : fpSplitN(splitter, canSplit, maxSplits-1, val)
-          ),
-        []
-      )
-    : s;
+export const splitN = splitOn => maxSplits => s =>
+  maxSplits > 0 && includes(splitOn)(s)
+    ? flatMapNoCap(
+        (v, i, arr) => i === 0 ? v : splitN(splitOn)(maxSplits-1)(v)
+      )(splitOnce(splitOn)(s))
+    : [s];
 
-export const splitN = (splitOn, maxSplits) => s =>
-  fpSplitN(
-    splitOnce(splitOn),
-    includes(splitOn),
-    maxSplits,
-    s
-  );
+export const trace = tag => x => {
+  console.log(tag, x);
+  return x;
+}
+
