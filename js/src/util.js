@@ -1,24 +1,19 @@
-const fp = require('lodash/fp');
+const R = require('ramda');
 
-const flatMapNoCap = fp.flatMap.convert({ 'cap': false });
-const match = c => s => s.match(c);
-const substring = x => y => s => s.substring(x, y);
-const search = c => s => s.search(c);
-const splitLeft = c => s => substring(0)(search(c)(s))(s);
-const splitRight = c => s => substring(
-  search(c)(s) + match(c)(s)[0].length
-)(s.length)(s);
-const splitOnce = c => s => [splitLeft(c)(s), splitRight(c)(s)]
+const search = R.curry((c, s) => s.search(c));
+const lSubstr = R.curry((i, s) => s.substring(0, i));
+const rSubstr = R.curry((i, s) => s.substr(-(s.length-(i+1))));
+const lSplit = R.curry((pat, s) => R.compose(lSubstr, search(pat))(s)(s));
+const rSplit = R.curry((pat, s) => R.compose(rSubstr, search(pat))(s)(s));
 
-export const splitN = splitOn => maxSplits => s =>
-  maxSplits > 0 && match(splitOn)(s)
-    ? flatMapNoCap(
-        (v, i) => i === 0 ? v : splitN(splitOn)(maxSplits-1)(v)
-      )(splitOnce(splitOn)(s))
-    : [s];
-
-export const trace = tag => x => {
-  console.log(tag, x);
-  return x;
-}
-
+// Regexp -> int -> str -> [str]
+export const splitN = R.curry(
+  (pat, n, s) =>
+    R.test(pat, s) && n > 0
+      ? R.compose(
+          R.prepend(lSplit(pat, s)),
+          splitN(pat, n-1),
+          rSplit(pat)
+        )(s)
+      : [s]
+);
