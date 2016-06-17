@@ -1,17 +1,21 @@
-var fp = require('lodash/fp');
-import { splitN, trace } from './util';
+const R = require('ramda');
+const Decimal = require('decimal.js');
+import { splitN, lTrim, trace } from './util';
 
 export const parseTransaction = input => {
-  let lines = fp.split('\n')(input);
-  let [date, desc] = fp.compose(
+  let lines = R.split('\n')(input);
+  let [date, desc] = R.compose(
     splitN(/ /)(1),
-    fp.head
+    R.head
   )(lines);
 
-  let postings = fp.compose(
-    fp.map(parts => ({ 'name': parts[1], 'quantity': parts[2] })),
-    fp.map(splitN(/\s{2,}/)(2)),
-    fp.tail
+
+  const safeDecimal = R.ifElse(R.identity, Decimal, R.identity);
+
+  let postings = R.compose(
+    R.map(parts => ({ 'name': R.trim(parts[1]), 'quantity': safeDecimal(lTrim('$ ')(parts[2])) })),
+    R.map(splitN(/\s{2,}/)(2)),
+    R.tail
   )(lines);
 
   return {
