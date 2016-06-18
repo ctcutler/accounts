@@ -1,3 +1,4 @@
+const Decimal = require('decimal.js');
 import { parseTransaction } from '../src/parse';
 
 const input = `2014/02/14 foo bar
@@ -30,12 +31,12 @@ describe('parseTransaction', function () {
     );
   });
 
-//  it('should parse the posting quantities correctly', function () {
-//    expect(
-//      parseTransaction(input).postings.map(v => v.quantity)
-//    ).toEqual(
-//      [288.10558392, undefined]
-//    );
-//  });
+  it('should parse the posting quantities correctly', function () {
+    expect(
+      parseTransaction(input).postings.map(v => v.quantity)
+    ).toEqual(
+      [Decimal(288.10558392), undefined]
+    );
+  });
 
 });
