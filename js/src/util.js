@@ -1,14 +1,13 @@
 const R = require('ramda');
-const M = require('monet');
 
-const search = R.invoker(1, 'search');
-const substring2 = R.invoker(2, 'substring');
-const substring1 = R.invoker(1, 'substring');
-const twice = f => d => f(d)(d);
-const lSplit = pat => twice(R.compose(substring2(0), search(pat)));
-const rSplit = pat => twice(R.compose(substring1, R.add(1), search(pat)));
+const lSplit = pat => s => s.substring(0, s.search(pat));
+const rSplit = pat => s => s.substring(s.search(pat)+1);
+const splitMore = (pat, n, s) => R.test(pat, s) && n > 0;
+const prependLeft = (pat, s) => R.prepend(lSplit(pat)(s));
+const recurseRight = (pat, n) => R.compose(splitN(pat, n-1), rSplit(pat));
+const recurse = (pat, n, s) => R.compose(prependLeft(pat, s), recurseRight(pat, n))(s);
+const baseCase = R.compose(Array, R.nthArg(2));
 const escapeRe = s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-const firstMatch = R.nth(1);
 const trimMatch = R.compose(R.match, RegExp, s => `^[${s}]*(.*)`, escapeRe);
 
 // a -> a (w/side effect)
@@ -20,16 +19,7 @@ export const trace = R.curry((tag, x) => {
 export const applyIfTruthy = f => R.ifElse(R.identity, f, R.identity);
 
 // Regexp -> int -> str -> [str]
-export const splitN = R.curry(
-  (pat, n, s) =>
-    R.test(pat, s) && n > 0
-      ? R.compose(
-          R.prepend(lSplit(pat)(s)),
-          splitN(pat, n-1),
-          rSplit(pat)
-        )(s)
-      : [s]
-);
+export const splitN = R.ifElse(splitMore, recurse, baseCase);
 
 // str -> str -> str
 export const lTrim = chars => applyIfTruthy(R.compose(R.nth(1), trimMatch(chars)));
