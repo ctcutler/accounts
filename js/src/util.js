@@ -1,7 +1,8 @@
 const R = require('ramda');
 
+const matchOffset = m => m.index + m[0].length;
 const lSplit = pat => s => s.substring(0, s.search(pat));
-const rSplit = pat => s => s.substring(s.search(pat)+1);
+const rSplit = pat => s => s.substring(matchOffset(s.match(pat)));
 const splitMore = (pat, n, s) => R.test(pat, s) && n > 0;
 const prependLeft = (pat, s) => R.prepend(lSplit(pat)(s));
 const recurseRight = (pat, n) => R.compose(splitN(pat, n-1), rSplit(pat));
