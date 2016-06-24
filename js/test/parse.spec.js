@@ -1,8 +1,10 @@
 const Decimal = require('decimal.js');
+const R = require('ramda');
 import { transaction, ledger } from '../src/parse';
-
 const transactionInput = `2014/02/14 foo bar
   Assets:Some Account:Sub-Account    $288.10558392
+  Assets:Some Account:Other Sub-Account   123.45 ABCD
+  Assets:Some Account:Another Sub-Account   -0.0070 VEXAX @ $62.2100
   Income:Some Other Account`;
 
 const transactionsInput = `account Liabilities:Credit Cards:Foo Card
@@ -56,17 +58,38 @@ describe('transaction', function () {
 
   it('should parse the posting accounts correctly', function () {
     expect(
-      transaction(transactionInput).postings.map(v => v.name)
+      transaction(transactionInput).postings.map(v => v.account)
     ).toEqual(
-      ['Assets:Some Account:Sub-Account', 'Income:Some Other Account']
+      [
+        'Assets:Some Account:Sub-Account',
+        'Assets:Some Account:Other Sub-Account',
+        'Assets:Some Account:Another Sub-Account',
+        'Income:Some Other Account'
+      ]
     );
   });
 
   it('should parse the posting quantities correctly', function () {
     expect(
-      transaction(transactionInput).postings.map(v => v.quantity)
+      transaction(transactionInput).postings.map(R.path(['amount', 'quantity']))
     ).toEqual(
-      [Decimal(288.10558392), undefined]
+      [Decimal(288.10558392), Decimal(123.45), Decimal(-0.0070), undefined]
+    );
+  });
+
+  it('should parse the posting commodities correctly', function () {
+    expect(
+      transaction(transactionInput).postings.map(R.path(['amount', 'commodity']))
+    ).toEqual(
+      ['$', 'ABCD', 'VEXAX', undefined]
+    );
+  });
+
+  it('should parse the posting unit prices correctly', function () {
+    expect(
+      transaction(transactionInput).postings.map(R.path(['amount', 'unitPrice']))
+    ).toEqual(
+      [undefined, undefined, { commodity: '$', quantity: Decimal(62.21) }, undefined]
     );
   });
 
