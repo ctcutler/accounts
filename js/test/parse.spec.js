@@ -1,4 +1,3 @@
-const Decimal = require('decimal.js');
 const R = require('ramda');
 import { transaction, ledger } from '../src/parse';
 const transactionInput = `2014/02/14 foo bar
@@ -73,7 +72,7 @@ describe('transaction', function () {
     expect(
       transaction(transactionInput).postings.map(R.path(['amount', 'quantity']))
     ).toEqual(
-      [Decimal(288.10558392), Decimal(123.45), Decimal(-0.0070), undefined]
+      [288.10558392, 123.45, -0.0070, undefined]
     );
   });
 
@@ -89,7 +88,7 @@ describe('transaction', function () {
     expect(
       transaction(transactionInput).postings.map(R.path(['amount', 'unitPrice']))
     ).toEqual(
-      [undefined, undefined, { commodity: '$', quantity: Decimal(62.21) }, undefined]
+      [undefined, undefined, { commodity: '$', quantity: 62.21 }, undefined]
     );
   });
 
