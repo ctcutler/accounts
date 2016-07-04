@@ -1,4 +1,13 @@
-import { splitN } from '../src/util';
+import { splitN, flattenToPaths } from '../src/util';
+
+describe('flattenToPaths', function () {
+  const input = {a: {b1: {c1: 42, c2: 43}}, x: {y: {z: 107}}, emp: {ty: {}}},
+    output = {"a:b1:c1": 42, "a:b1:c2": 43, "x:y:z": 107, "emp:ty": {}};
+
+  it('should flatten to paths', function () {
+    expect(flattenToPaths(input)).toEqual(output);
+  });
+});
 
 describe('splitN', function () {
   const input = 'foo bar baz',

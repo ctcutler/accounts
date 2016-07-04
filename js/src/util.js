@@ -1,5 +1,11 @@
 const R = require('ramda');
 
+// a -> a (w/side effect)
+export const trace = R.curry((tag, x) => {
+  console.log(tag, JSON.stringify(x));
+  return x;
+});
+
 const matchOffset = m => m.index + m[0].length;
 const lSplit = pat => s => s.substring(0, s.search(pat));
 const rSplit = pat => s => s.substring(matchOffset(s.match(pat)));
@@ -10,12 +16,14 @@ const recurse = (pat, n, s) => R.compose(prependLeft(pat, s), recurseRight(pat, 
 const baseCase = R.compose(Array, R.nthArg(2));
 const escapeRe = s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 const trimMatch = R.compose(R.match, RegExp, s => `^[${s}]*(.*)`, escapeRe);
-
-// a -> a (w/side effect)
-export const trace = R.curry((tag, x) => {
-  console.log(tag, x);
-  return x;
-});
+const makePaths = R.ifElse(
+  R.curry((path, v) => R.is(Object, v) && !R.isEmpty(v)),
+  R.curry((path, v) => R.compose(
+    R.map(k => makePaths(R.append(k, path), v[k])),
+    R.keys
+  )(v)),
+  R.curry((path, v) => R.objOf(R.join(':', path), v))
+);
 
 export const applyIfTruthy = f => R.ifElse(R.identity, f, R.identity);
 
@@ -24,3 +32,12 @@ export const splitN = R.ifElse(splitMore, recurse, baseCase);
 
 // str -> str -> str
 export const lTrim = chars => applyIfTruthy(R.compose(R.nth(1), trimMatch(chars)));
+
+// obj -> obj
+// flattens nested objects into a shallow object with ':'-separated paths for keys
+// {a: {b: 1}} -> {"a:b": 1}
+export const flattenToPaths = R.compose(
+  R.reduce(R.merge, {}),
+  R.flatten,
+  makePaths([])
+);

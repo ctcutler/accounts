@@ -1,5 +1,5 @@
 const R = require('ramda');
-import { transaction, ledger } from '../src/parse';
+import { postings, transaction, ledger } from '../src/parse';
 const transactionInput = `2014/02/14 foo bar
   Assets:Some Account:Sub-Account    $288.10558392
   Assets:Some Account:Other Sub-Account   123.45 ABCD
@@ -28,6 +28,15 @@ P 2016/04/24 00:00:00 QCEQIX $166.4876
 2014/02/14 foo bar
   Assets:Some Account:Sub-Account    $288.10558392
   Income:Some Other Account`;
+
+describe('postings', function () {
+  it('should parse amount-less postings', function () {
+    const input = `2014/01/02 Initial Balances
+  Assets:80 Madbury Road    $107000.00
+  Equity:Initial Balances`;
+    expect(postings(input)[1].amount).toEqual({});
+  });
+});
 
 describe('ledger', function () {
   it('should parse the right number of transactions', function () {

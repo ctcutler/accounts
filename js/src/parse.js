@@ -35,12 +35,12 @@ const amount = R.compose(
     [ R.test(/^-?\d.*@/), withUnitPrice ],
     [ R.test(/^-?\d/), postfixCommodity ],
     [ R.length, prefixCommodity ],
-    [ R.T, a => {} ],
+    [ R.T, a => ({}) ],
   ]),
   R.nth(2)
 );
 const posting = R.compose(R.applySpec({ account, amount }), splitN(/\s{2,}/, 2));
-const postings = R.compose(R.map(posting), R.tail, lines);
+export const postings = R.compose(R.map(posting), R.tail, lines);
 export const transaction = R.compose(R.applySpec({ desc, date, postings }), R.trim);
 const transactions = R.compose(R.map(transaction), transChunks);
 export const ledger = R.compose(R.applySpec({ transactions }), transSection);

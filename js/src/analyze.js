@@ -5,7 +5,7 @@ import { trace } from './util';
 export const mergeAmounts = R.mergeWith(R.add);
 export const amount = R.compose(
   R.ifElse(
-    R.isEmpty,
+    o => !o || R.isEmpty(o),
     R.identity,
     o => R.objOf(o.commodity, o.quantity)
   ),
