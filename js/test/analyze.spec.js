@@ -1,5 +1,5 @@
 const R = require('ramda');
-import { balance, balancePostings, mergeAmounts, amount,
+import { balance, balancePostings, mergeAmounts, amount, amounts,
          balancedAmount, emptyKey } from '../src/analyze';
 
 const transactions = [
@@ -13,6 +13,24 @@ const transactions = [
       },
       {
         account: 'Expenses:Groceries',
+        amount: {}
+      }
+    ]
+  },
+  {
+    desc: 'buy stock',
+    date: new Date('2014/02/17'),
+    postings: [
+      {
+        account: 'Assets:Brokerage Account',
+        amount: {
+            quantity: -22.33,
+            commodity: 'CTC',
+            unitPrice: { quantity: 23.45, commodity: '$' }
+        }
+      },
+      {
+        account: 'Assets:Brokerage Account',
         amount: {}
       }
     ]
@@ -32,6 +50,7 @@ const transactions = [
     ]
   }
 ];
+
 describe('amount', function() {
   it('should return a commodity -> quantity object', () => {
     const input = {amount: { quantity: -34.52 , commodity: '$' }};
@@ -41,6 +60,18 @@ describe('amount', function() {
   it('should return a completely empty object', () => {
     const input = {amount: {}};
     expect(R.isEmpty(amount(input))).toBe(true);
+  });
+
+  it('should handle unitPrice', () => {
+    const input = {
+        amount: {
+            quantity: -22.33,
+            commodity: 'CTC',
+            unitPrice: { quantity: 23.45, commodity: '$' }
+        }
+    };
+    expect(amount(input)['CTC']).toEqual(-22.33);
+    expect(amount(input)['$']).toEqual(23.45*22.33);
   });
 });
 
@@ -102,5 +133,10 @@ describe('balance', function () {
   it('should return the right bank account balance', function () {
     expect(balance(transactions)['Assets:Bank Account:National Savings Bank'])
       .toEqual({$: -34.52});
+  });
+
+  it('should return the right brokerage account balance', function () {
+    expect(balance(transactions)['Assets:Brokerage Account'])
+      .toEqual({CTC: -22.33, $: 22.33*23.45});
   });
 });

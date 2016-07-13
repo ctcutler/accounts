@@ -25,6 +25,18 @@ const makePaths = R.ifElse(
   R.curry((path, v) => R.objOf(R.join(':', path), v))
 );
 
+export const safeObjOf = R.ifElse(
+  (k, v) => k === undefined,
+  (k, v) => ({}),
+  (k, v) => R.objOf(k, v)
+);
+
+export const safeAssoc = R.ifElse(
+  (k, v, o) => k === undefined,
+  (k, v, o) => o,
+  (k, v, o) => R.assoc(k, v, o)
+);
+
 export const applyIfTruthy = f => R.ifElse(R.identity, f, R.identity);
 
 // Regexp -> int -> str -> [str]
