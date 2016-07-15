@@ -78,11 +78,12 @@ describe('transaction', function () {
   });
 
   it('should parse the posting quantities correctly', function () {
-    expect(
-      transaction(transactionInput).postings.map(R.path(['amount', 'quantity']))
-    ).toEqual(
-      [288.10558392, 123.45, -0.0070, undefined]
-    );
+    const trans = transaction(transactionInput);
+    const [q1, q2, q3, q4] = trans.postings.map(R.path(['amount', 'quantity']));
+    expect(q1.equals(288.10558392)).toBe(true);
+    expect(q2.equals(123.45)).toBe(true);
+    expect(q3.equals(-0.0070)).toBe(true);
+    expect(q4).toBe(undefined);
   });
 
   it('should parse the posting commodities correctly', function () {
@@ -94,11 +95,13 @@ describe('transaction', function () {
   });
 
   it('should parse the posting unit prices correctly', function () {
-    expect(
-      transaction(transactionInput).postings.map(R.path(['amount', 'unitPrice']))
-    ).toEqual(
-      [undefined, undefined, { commodity: '$', quantity: 62.21 }, undefined]
-    );
+    const trans = transaction(transactionInput);
+    const [up1, up2, up3, up4] = trans.postings.map(R.path(['amount', 'unitPrice']));
+    expect(up1).toBe(undefined);
+    expect(up2).toBe(undefined);
+    expect(up3.commodity).toBe('$');
+    expect(up3.quantity.equals(62.21)).toBe(true);
+    expect(up4).toBe(undefined);
   });
 
 });

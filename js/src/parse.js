@@ -1,6 +1,6 @@
 Error.stackTraceLimit = Infinity;
 const R = require('ramda');
-import { splitN, lTrim, trace, applyIfTruthy } from './util';
+import { splitN, trace, parseDecimal } from './util';
 
 // helpers
 const lines = R.split('\n');
@@ -13,11 +13,11 @@ const desc = R.compose(R.last, splitN(/ /, 1), firstLine);
 const date = R.compose(R.constructN(1, Date), R.head, splitN(/ /, 1), firstLine);
 const account = R.compose(R.trim, R.nth(1));
 const prefixCommodity = R.applySpec({
-  commodity: R.head, quantity: R.compose(parseFloat, R.tail)
+  commodity: R.head, quantity: R.compose(parseDecimal, R.tail)
 });
 const withUnitPrice = R.compose(
   R.applySpec({
-    quantity: R.compose(parseFloat, R.nth(0)),
+    quantity: R.compose(parseDecimal, R.nth(0)),
     commodity: R.nth(1),
     unitPrice: R.compose(prefixCommodity, R.nth(3))
   }),
@@ -25,7 +25,7 @@ const withUnitPrice = R.compose(
 );
 const postfixCommodity = R.compose(
   R.applySpec({
-    quantity: R.compose(parseFloat, R.nth(0)),
+    quantity: R.compose(parseDecimal, R.nth(0)),
     commodity: R.nth(1),
   }),
   R.split(/ /)
