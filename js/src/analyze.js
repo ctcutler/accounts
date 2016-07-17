@@ -1,14 +1,16 @@
 Error.stackTraceLimit = Infinity;
 const R = require('ramda');
-import { trace, safeObjOf, safeAssoc } from './util';
+import { trace, safeObjOf, safeAssoc, multDecimal, addDecimal, invertDecimal } from './util';
 
-export const mergeAmounts = R.mergeWith(R.add);
+export const mergeAmounts = R.mergeWith(addDecimal);
+export const unitQuantity = R.path(['unitPrice', 'quantity']);
+export const unitCommodity = R.path(['unitPrice', 'commodity']);
 export const amount = R.compose(
   amt => R.merge(
     safeObjOf(amt.commodity, amt.quantity),
     safeObjOf(
-      R.path(['unitPrice', 'commodity'], amt),
-      R.path(['unitPrice', 'quantity'], amt) * amt.quantity * -1
+      unitCommodity(amt),
+      R.reduce(multDecimal, -1, [unitQuantity(amt), amt.quantity])
     )
   ),
   R.prop('amount')
@@ -16,7 +18,7 @@ export const amount = R.compose(
 export const reducePosting = (acc, p) => R.mergeWith(
   mergeAmounts, R.objOf(p['account'], amount(p)), acc
 );
-const invertValues = R.map(R.multiply(-1));
+const invertValues = R.map(invertDecimal);
 export const balancedAmount = R.compose(
   R.reduce(mergeAmounts, {}),
   R.map(invertValues),

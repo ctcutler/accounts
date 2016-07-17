@@ -3,13 +3,26 @@ const Decimal = require('decimal.js');
 
 // Debugging
 export const trace = R.curry((tag, x) => {
-  console.log(tag, JSON.stringify(x));
+  //console.log(tag, JSON.stringify(x));
+  console.log(tag, x);
   return x;
 });
 
 // Numbers
 export const parseDecimal = R.constructN(1, Decimal);
-
+export const addDecimal = R.ifElse(
+  (x, y) => R.or(R.isNil(x), R.isNil(y)),
+  (x, y) => undefined,
+  (x, y) => parseDecimal(x).plus(parseDecimal(y))
+);
+export const multDecimal = R.ifElse(
+  (x, y) => R.or(R.isNil(x), R.isNil(y)),
+  (x, y) => undefined,
+  (x, y) => parseDecimal(x).times(parseDecimal(y))
+);
+export const invertDecimal = R.ifElse(
+  R.isNil, R.identity, x => multDecimal(-1, x)
+);
 
 // Strings
 const matchOffset = m => m.index + m[0].length;

@@ -1,4 +1,4 @@
-import { splitN, flattenToPaths } from '../src/util';
+import { splitN, flattenToPaths, parseDecimal, multDecimal } from '../src/util';
 
 describe('flattenToPaths', function () {
   const input = {a: {b1: {c1: 42, c2: 43}}, x: {y: {z: 107}}, emp: {ty: {}}},
@@ -6,6 +6,32 @@ describe('flattenToPaths', function () {
 
   it('should flatten to paths', function () {
     expect(flattenToPaths(input)).toEqual(output);
+  });
+});
+
+describe('parseDecimal', function () {
+  it('should work with -1', () => {
+    parseDecimal(-1);
+  });
+
+  it('should handle undefined safely', () => {
+    expect(multDecimal(parseDecimal('23.45'), undefined)).toBe(undefined);
+  });
+});
+
+describe('multDecimal', function () {
+  it('should multiply two decimals without floating point innaccuracies', () => {
+    expect(
+      multDecimal(
+        parseDecimal('23.45'), parseDecimal('22.33')
+      ).equals(
+        parseDecimal('523.6385')
+      )
+    ).toBe(true);
+  });
+
+  it('should handle undefined safely', () => {
+    expect(multDecimal(parseDecimal('23.45'), undefined)).toBe(undefined);
   });
 });
 
