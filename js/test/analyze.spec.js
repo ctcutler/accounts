@@ -128,7 +128,7 @@ describe('mergeAmounts', function () {
 describe('balance', function () {
   it('should return the right credit card balance', function () {
     expect(balance(transactions)['Liabilities:Credit Cards:MasterCard'])
-      .toEqual({$: parseDecimal(0.00)});
+      .toEqual({});
   });
 
   it('should return the right groceries balance', function () {

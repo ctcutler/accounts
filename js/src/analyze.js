@@ -1,6 +1,7 @@
 Error.stackTraceLimit = Infinity;
 const R = require('ramda');
-import { trace, safeObjOf, safeAssoc, multDecimal, addDecimal, invertDecimal } from './util';
+import { trace, safeObjOf, safeAssoc, multDecimal, addDecimal, invertDecimal,
+  decimalIsZero } from './util';
 
 export const mergeAmounts = R.mergeWith(addDecimal);
 export const unitQuantity = R.path(['unitPrice', 'quantity']);
@@ -38,4 +39,5 @@ const reduceTrans = (acc, v) => R.compose(
   R.reduce(reducePosting, {}), // make account -> {commodity -> quantity} mapping
   R.prop('postings')
 )(v);
-export const balance = R.reduce(reduceTrans, {});
+export const removeZeroes = R.map(R.filter(R.compose(R.not, decimalIsZero)));
+export const balance = R.compose(removeZeroes, R.reduce(reduceTrans, {}));

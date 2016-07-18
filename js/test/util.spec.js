@@ -1,4 +1,4 @@
-import { splitN, flattenToPaths, parseDecimal, multDecimal } from '../src/util';
+import { splitN, flattenToPaths, parseDecimal, multDecimal, decimalIsZero } from '../src/util';
 
 describe('flattenToPaths', function () {
   const input = {a: {b1: {c1: 42, c2: 43}}, x: {y: {z: 107}}, emp: {ty: {}}},
@@ -16,6 +16,15 @@ describe('parseDecimal', function () {
 
   it('should handle undefined safely', () => {
     expect(multDecimal(parseDecimal('23.45'), undefined)).toBe(undefined);
+  });
+});
+
+describe('decimalIsZero', function () {
+  it('should return true for 0', () => {
+    expect(decimalIsZero(parseDecimal(0))).toBe(true);
+  });
+  it('should return false for 1', () => {
+    expect(decimalIsZero(parseDecimal(1))).toBe(false);
   });
 });
 

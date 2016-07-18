@@ -23,6 +23,7 @@ export const multDecimal = R.ifElse(
 export const invertDecimal = R.ifElse(
   R.isNil, R.identity, x => multDecimal(-1, x)
 );
+export const decimalIsZero = R.invoker(0, 'isZero');
 
 // Strings
 const matchOffset = m => m.index + m[0].length;
