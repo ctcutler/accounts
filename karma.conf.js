@@ -7,6 +7,7 @@ module.exports = function(config) {
       'js/src/**/*.js',
       'js/test/**/*.spec.js'
     ],
+    exclude: ['js/src/main.js'],
     //logLevel: 'LOG_DEBUG',
     preprocessors: {
       'js/src/**/*.js': [ 'browserify' ],
@@ -14,7 +15,7 @@ module.exports = function(config) {
     },
     browserify: {
       debug: true,
-      transform: [["babelify", { "presets": ["es2015"] }]],
+      transform: [["babelify", { "presets": ["react", "es2015"] }]],
     }
   });
 };

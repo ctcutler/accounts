@@ -11,3 +11,4 @@ data
 
 # js stuff
 node_modules
+web/bundle.js

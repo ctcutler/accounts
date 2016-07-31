@@ -1,7 +1,8 @@
 const R = require('ramda');
 import { parseDecimal } from '../src/util';
-import { balance, balancePostings, mergeAmounts, amount, amounts,
-         balancedAmount, emptyKey } from '../src/analyze';
+import { balanceMap, balancePostings, mergeAmounts, amount, amounts,
+         balancedAmount, emptyKey, filterAccount, accountBalance
+} from '../src/analyze';
 
 const transactions = [
   {
@@ -125,23 +126,46 @@ describe('mergeAmounts', function () {
   });
 });
 
-describe('balance', function () {
-  it('should return the right credit card balance', function () {
-    expect(balance(transactions)['Liabilities:Credit Cards:MasterCard'])
+describe('balanceMap', function () {
+  it('should return the right credit card balanceMap', function () {
+    expect(balanceMap(transactions)['Liabilities:Credit Cards:MasterCard'])
       .toEqual({});
   });
 
   it('should return the right groceries balance', function () {
-    expect(balance(transactions)['Expenses:Groceries']).toEqual({'$': parseDecimal(34.52)});
+    expect(balanceMap(transactions)['Expenses:Groceries']).toEqual({'$': parseDecimal(34.52)});
   });
 
   it('should return the right bank account balance', function () {
-    expect(balance(transactions)['Assets:Bank Account:National Savings Bank'])
+    expect(balanceMap(transactions)['Assets:Bank Account:National Savings Bank'])
       .toEqual({$: parseDecimal(-34.52)});
   });
 
   it('should return the right brokerage account balance', function () {
-    expect(balance(transactions)['Assets:Brokerage Account'])
+    expect(balanceMap(transactions)['Assets:Brokerage Account'])
       .toEqual({CTC: parseDecimal(-22.33), $: parseDecimal(523.6385)});
+  });
+});
+
+describe('filterAccount', function () {
+  it('should filter a balance list by account', function () {
+    const balanceList = [['Foo', 1], ['Bar', 2]];
+    expect(
+      filterAccount(/^F/)(balanceList)
+    ).toEqual(
+      [['Foo', 1]]
+    );
+  });
+});
+
+describe('accountBalance', function () {
+  it('should return balances for the specified accounts', function () {
+    expect(accountBalance(/^Assets:Brokerage/)(transactions))
+      .toEqual(
+        [[
+          'Assets:Brokerage Account',
+          {CTC: parseDecimal(-22.33), $: parseDecimal(523.6385)}
+        ]]
+      );
   });
 });

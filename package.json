@@ -34,6 +34,7 @@
     "babel-preset-es2015": "^6.9.0",
     "babel-preset-react": "^6.11.1",
     "babelify": "^7.3.0",
+    "c3": "^0.4.11",
     "decimal.js": "^5.0.8",
     "lodash-es": "^4.12.0",
     "monet": "^0.8.10",

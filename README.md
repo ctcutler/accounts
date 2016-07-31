@@ -46,3 +46,21 @@ References:
 
 See http://jpsierens.com/tutorial-gulp-javascript-2015-react/ for ideas about how to get ES6/React going
 (which conveniently uses browserify and babelify).
+
+Reports
+ - Total Net Worth Over Time
+   - Broken Down By Assets and Liabilities
+   - Broken Down By Liquid and Illiquid
+ - Income/Expenses
+   - Broken Down By Account Over a Time Period
+   - Over Time
+
+Features
+ - Upload data file
+ - View reports
+ - Accounts that have changed significantly in a time period
+ - Drill in from chart to transactions
+ - Time range selector
+ - Commodity prices
+   - Read from data file
+   - Fetch

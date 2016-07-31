@@ -40,4 +40,7 @@ const reduceTrans = (acc, v) => R.compose(
   R.prop('postings')
 )(v);
 export const removeZeroes = R.map(R.filter(R.compose(R.not, decimalIsZero)));
-export const balance = R.compose(removeZeroes, R.reduce(reduceTrans, {}));
+export const balanceMap = R.compose(removeZeroes, R.reduce(reduceTrans, {}));
+export const balance = R.compose(R.toPairs, balanceMap);
+export const filterAccount = re => R.filter(R.compose(R.test(re), R.nth(0)));
+export const accountBalance = pat => R.compose(filterAccount(pat), balance);

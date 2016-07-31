@@ -4,7 +4,8 @@ var browserify = require('browserify');
 var source = require('vinyl-source-stream');
 var gutil = require('gulp-util');
 
-gulp.task('build', function (done) {
+
+gulp.task('build', function () {
   browserify({
     entries: './js/src/main.js',
     debug: true
@@ -12,9 +13,13 @@ gulp.task('build', function (done) {
     "babelify", {presets: ["es2015", "react"]}
   )
   .bundle()
-  .on('error',gutil.log)
+//  .on('error',gutil.log)
   .pipe(source('bundle.js'))
   .pipe(gulp.dest('./web'));
+});
+
+gulp.task('watch', function() {
+    gulp.watch('./js/*/*.js', ['test', 'build']);
 });
 
 gulp.task('test', function (done) {
