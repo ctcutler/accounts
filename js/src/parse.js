@@ -6,6 +6,7 @@ import { splitN, trace, parseDecimal } from './util';
 const lines = R.split('\n');
 const firstLine = R.compose(R.head, lines);
 const transChunks = R.split(/\n{2,}/);
+const cpSection = R.compose(R.nth(2), splitN(/\n{2}/, 4));
 const transSection = R.compose(R.nth(4), splitN(/\n{2}/, 4));
 
 // parsing
@@ -41,6 +42,20 @@ const amount = R.compose(
 );
 const posting = R.compose(R.applySpec({ account, amount }), splitN(/\s{2,}/, 2));
 export const postings = R.compose(R.map(posting), R.tail, lines);
-export const transaction = R.compose(R.applySpec({ desc, date, postings }), R.trim);
-const transactions = R.compose(R.map(transaction), transChunks);
-export const ledger = R.compose(R.applySpec({ transactions }), transSection);
+export const transaction = R.compose(
+  R.applySpec({ desc, date, postings }),
+  R.trim
+);
+const transactions = R.compose(R.map(transaction), transChunks, transSection);
+const cpDate = R.compose(R.constructN(1, Date), R.nth(1));
+const cpPrice = R.compose(parseDecimal, R.tail, R.nth(4));
+const cpUnit = R.compose(R.head, R.nth(4));
+const cpObj = R.applySpec({date: cpDate, unit: cpUnit, price: cpPrice});
+const commodityPrice = R.compose(
+  R.apply(R.objOf),
+  R.juxt([R.nth(3), cpObj]),
+  splitN(/ /, 4)
+);
+const reduceCP = (acc, val) => R.merge(acc, commodityPrice(val));
+export const commodityPrices = R.compose(R.reduce(reduceCP, {}), lines, cpSection);
+export const ledger = R.applySpec({ transactions, commodityPrices });

@@ -1,12 +1,13 @@
 const R = require('ramda');
-import { postings, transaction, ledger } from '../src/parse';
+import { postings, transaction, ledger, commodityPrices } from '../src/parse';
+import { parseDecimal } from '../src/util';
 const transactionInput = `2014/02/14 foo bar
   Assets:Some Account:Sub-Account    $288.10558392
   Assets:Some Account:Other Sub-Account   123.45 ABCD
   Assets:Some Account:Another Sub-Account   -0.0070 VEXAX @ $62.2100
   Income:Some Other Account`;
 
-const transactionsInput = `account Liabilities:Credit Cards:Foo Card
+const ledgerInput = `account Liabilities:Credit Cards:Foo Card
 account Liabilities:Credit Cards:Foo Card 2
 
 commodity $
@@ -41,8 +42,30 @@ describe('postings', function () {
 describe('ledger', function () {
   it('should parse the right number of transactions', function () {
     expect(
-      ledger(transactionsInput).transactions.length
+      ledger(ledgerInput).transactions.length
     ).toEqual(3);
+  });
+  it('should parse the right number of commodity prices', function () {
+    expect(
+      R.keys(ledger(ledgerInput).commodityPrices).length
+    ).toEqual(2);
+  });
+});
+
+describe('commodityPrices', function () {
+  it('should parse prices correctly', function () {
+    expect(commodityPrices(ledgerInput)).toEqual({
+      'MWTRX': {
+        date: new Date('2016/04/24'),
+        unit: '$',
+        price: parseDecimal('10.82')
+      },
+      'QCEQIX': {
+        date: new Date('2016/04/24'),
+        unit: '$',
+        price: parseDecimal('166.4876')
+      },
+    });
   });
 });
 
