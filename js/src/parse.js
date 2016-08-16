@@ -42,6 +42,32 @@ const amount = R.compose(
 );
 const posting = R.compose(R.applySpec({ account, amount }), splitN(/\s{2,}/, 2));
 export const postings = R.compose(R.map(posting), R.tail, lines);
+
+/* "2014/02/14 foo bar
+ *    Assets:Some Account:Sub-Account    $288.10558392
+ *    Assets:Some Account:Another Sub-Account   -0.0070 VEXAX @ $62.2100
+ *    Income:Some Other Account"
+ * ->
+ * {
+ *   date: Date('2014/02/14'),
+ *   desc: 'foo bar',
+ *   postings: [
+ *     {
+ *       account: 'Assets:Some Account:Sub-Account',
+ *       amount: {quantity: Decimal(288.10558392), commodity: '$'}
+ *     },
+ *     {
+ *       account: 'Assets:Some Account:Another Sub-Account',
+ *       amount: {quantity: Decimal(-0.0070), commodity: 'VEXAX'},
+         unitPrice: {quantity: Decimal(62.2100), commodity: '$'}
+ *     },
+ *     {
+ *       account: 'Assets:Some Account:Sub-Account',
+ *       amount: {}
+ *     },
+ *   ]
+ * }
+ */
 export const transaction = R.compose(
   R.applySpec({ desc, date, postings }),
   R.trim
@@ -57,5 +83,9 @@ const commodityPrice = R.compose(
   splitN(/ /, 4)
 );
 const reduceCP = (acc, val) => R.merge(acc, commodityPrice(val));
+
+/* "P 2016/04/24 00:00:00 MWTRX $10.82"
+ * ->
+ * {'MWTRX': {date: Date('2016/04/24'), unit: '$', price: Decimal('10.82')}} */
 export const commodityPrices = R.compose(R.reduce(reduceCP, {}), lines, cpSection);
 export const ledger = R.applySpec({ transactions, commodityPrices });

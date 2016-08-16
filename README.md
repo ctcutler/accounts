@@ -64,3 +64,7 @@ Features
  - Commodity prices
    - Read from data file
    - Fetch
+
+To Dos
+ - consider using classes for transactions, postings, quantities, etc.
+ - reorganize source directory, to better distinguish between UI and model
