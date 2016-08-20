@@ -46,3 +46,32 @@ export const balance = R.compose(R.toPairs, balanceMap);
 export const filterAccount = re => R.filter(R.compose(R.test(re), R.nth(0)));
 // pattern string -> [transaction] -> [[account, {commodity: quantity}]]
 export const accountBalance = pat => R.compose(filterAccount(pat), balance);
+
+// FIXME: should commodity prices structure be the following?
+//{ fromcommodity: { tocommodity: [{date: Date(), price: Decimal()}]}}
+// FIXME: try first look up the price for everything, then doing the conversion
+const calculateConversion = R.ifElse(
+  (prices, pair) => R.has(pair[0], prices),
+  (prices, pair) => multDecimal(prices[pair[0]].price, pair[1]),
+  (prices, pair) => undefined
+);
+const convertCommodity = (prices, commodity) => R.unless(
+  R.compose(R.equals(commodity), R.nth(0)),
+  R.ifElse(
+    pair => R.has(pair[0], prices),
+    pair => [commodity, multDecimal(prices[pair[0]].price, pair[1])],
+    pair => [pair[0], undefined]
+  )
+);
+/* FIXME: need better comment */
+export const convertCommodities = (prices, commodity) => R.map(
+  R.adjust(
+    R.compose(
+      R.reduce((acc, val) => R.mergeWith(addDecimal, acc, R.objOf(val[0], val[1])), {}),
+      R.map(convertCommodity(prices, commodity)),
+      R.toPairs
+    ),
+    1
+  )
+);
+export const toDollars = prices => convertCommodities(prices, '$');

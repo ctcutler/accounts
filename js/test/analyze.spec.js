@@ -1,8 +1,8 @@
 const R = require('ramda');
 import { parseDecimal } from '../src/util';
 import { balanceMap, balancePostings, mergeAmounts, amount, amounts,
-         balancedAmount, emptyKey, filterAccount, accountBalance
-} from '../src/analyze';
+         balancedAmount, emptyKey, filterAccount, accountBalance,
+         convertCommodities } from '../src/analyze';
 
 const transactions = [
   {
@@ -167,5 +167,30 @@ describe('accountBalance', function () {
           {CTC: parseDecimal(-22.33), $: parseDecimal(523.6385)}
         ]]
       );
+  });
+});
+
+describe('convertCommodities', function () {
+  it('should convert all commodities in an object down to one', function () {
+    const prices = {
+      'MWTRX': {
+        date: new Date('2016/04/24'),
+        unit: '$',
+        price: parseDecimal('.5')
+      },
+      'QCEQIX': {
+        date: new Date('2016/04/24'),
+        unit: '$',
+        price: parseDecimal('2')
+      },
+    };
+    const input = [
+      ['acct1', {'$': parseDecimal(1), 'MWTRX': parseDecimal(2)}],
+      ['acct2', {'QCEQIX': parseDecimal(3), 'DOESNOTEXIST': parseDecimal(4)}]
+    ];
+    expect(convertCommodities(prices, '$')(input)).toEqual([
+      ['acct1', {'$': parseDecimal(2)}],
+      ['acct2', {'$': parseDecimal(6), 'DOESNOTEXIST': undefined}],
+    ]);
   });
 });

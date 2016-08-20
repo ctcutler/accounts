@@ -58,13 +58,14 @@ Reports
 Features
  - Upload data file
  - View reports
- - Accounts that have changed significantly in a time period
  - Drill in from chart to transactions
  - Time range selector
  - Commodity prices
    - Read from data file
    - Fetch
+ - Accounts that have changed significantly in a time period
 
 To Dos
  - consider using classes for transactions, postings, quantities, etc.
  - reorganize source directory, to better distinguish between UI and model
+ - figure out null/undefined handling
