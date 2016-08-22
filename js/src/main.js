@@ -1,5 +1,5 @@
 import { data } from './data';
-import { accountBalance, toDollars } from './analyze';
+import { balance, toDollars, filterAccount, filterBefore, filterAfter } from './analyze';
 import { ledger } from './parse';
 import { trace } from './util';
 const R = require('ramda');
@@ -13,7 +13,10 @@ const ledgerData = ledger(data);
 const columns = R.compose(
   R.map(R.adjust(R.prop('$'), 1)),
   toDollars(ledgerData['commodityPrices']),
-  accountBalance(/^Assets/),
+  filterAccount(/^Assets/),
+  balance,
+  filterBefore(new Date('2016/03/01')),
+  filterAfter(new Date('2016/01/01')),
   R.prop('transactions')
 )(ledgerData);
 

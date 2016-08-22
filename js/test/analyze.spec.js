@@ -1,8 +1,8 @@
 const R = require('ramda');
 import { parseDecimal } from '../src/util';
 import { balanceMap, balancePostings, mergeAmounts, amount, amounts,
-         balancedAmount, emptyKey, filterAccount, accountBalance,
-         convertCommodities } from '../src/analyze';
+         balancedAmount, emptyKey, filterAccount, filterBefore, filterAfter,
+         balance, convertCommodities } from '../src/analyze';
 
 const transactions = [
   {
@@ -129,7 +129,7 @@ describe('mergeAmounts', function () {
 describe('balanceMap', function () {
   it('should return the right credit card balanceMap', function () {
     expect(balanceMap(transactions)['Liabilities:Credit Cards:MasterCard'])
-      .toEqual({});
+      .toEqual(undefined);
   });
 
   it('should return the right groceries balance', function () {
@@ -158,15 +158,17 @@ describe('filterAccount', function () {
   });
 });
 
-describe('accountBalance', function () {
-  it('should return balances for the specified accounts', function () {
-    expect(accountBalance(/^Assets:Brokerage/)(transactions))
-      .toEqual(
-        [[
-          'Assets:Brokerage Account',
-          {CTC: parseDecimal(-22.33), $: parseDecimal(523.6385)}
-        ]]
-      );
+describe('filterBefore', function () {
+  it('should filter a transactions list by dates before the given one', function () {
+    expect(filterBefore(new Date('2014/02/18'))(transactions).length).toEqual(2);
+    expect(filterBefore(new Date('2014/02/14'))(transactions).length).toEqual(0);
+  });
+});
+
+describe('filterAfter', function () {
+  it('should filter a transactions list by dates after the given one', function () {
+    expect(filterAfter(new Date('2014/02/16'))(transactions).length).toEqual(2);
+    expect(filterAfter(new Date('2014/02/19'))(transactions).length).toEqual(0);
   });
 });
 
@@ -188,7 +190,7 @@ describe('convertCommodities', function () {
       ['acct1', {'$': parseDecimal(1), 'MWTRX': parseDecimal(2)}],
       ['acct2', {'QCEQIX': parseDecimal(3), 'DOESNOTEXIST': parseDecimal(4)}]
     ];
-    expect(convertCommodities(prices, '$')(input)).toEqual([
+    expect(convertCommodities('$')(prices)(input)).toEqual([
       ['acct1', {'$': parseDecimal(2)}],
       ['acct2', {'$': parseDecimal(6), 'DOESNOTEXIST': undefined}],
     ]);

@@ -39,13 +39,22 @@ const reduceTrans = (acc, v) => R.compose(
   R.reduce(reducePosting, {}), // make account -> {commodity -> quantity} mapping
   R.prop('postings')
 )(v);
-export const removeZeroes = R.map(R.filter(R.compose(R.not, decimalIsZero)));
+
+// {'foo': {'$': 12.43}, 'bar': {'$': 0}} -> {'foo': {'$': 12.43}}
+export const removeZeroes = R.filter(
+  R.compose(
+    R.any(R.identity),
+    R.values,
+    R.map(R.compose(R.not, decimalIsZero))
+  )
+);
 // [transaction] -> {account: {commodity: quantity}}
 export const balanceMap = R.compose(removeZeroes, R.reduce(reduceTrans, {}));
-export const balance = R.compose(R.toPairs, balanceMap);
 export const filterAccount = re => R.filter(R.compose(R.test(re), R.nth(0)));
-// pattern string -> [transaction] -> [[account, {commodity: quantity}]]
-export const accountBalance = pat => R.compose(filterAccount(pat), balance);
+export const balance = R.compose(R.toPairs, balanceMap);
+
+export const filterBefore = d => R.filter(R.compose(R.gt(d), R.prop('date')));
+export const filterAfter = d => R.filter(R.compose(R.lt(d), R.prop('date')));
 
 // FIXME: should commodity prices structure be the following?
 //{ fromcommodity: { tocommodity: [{date: Date(), price: Decimal()}]}}
@@ -63,8 +72,11 @@ const convertCommodity = (prices, commodity) => R.unless(
     pair => [pair[0], undefined]
   )
 );
-/* FIXME: need better comment */
-export const convertCommodities = (prices, commodity) => R.map(
+
+/* takes commodity to convert to, price mapping, list of [account, amount mapping] pairs;
+   updates the amount mappings to the requested commodity or sets them to undefined */
+// FIXME: consider just taking a list of amount mapping objects, updating them in order
+export const convertCommodities = commodity => prices => R.map(
   R.adjust(
     R.compose(
       R.reduce((acc, val) => R.mergeWith(addDecimal, acc, R.objOf(val[0], val[1])), {}),
@@ -74,4 +86,4 @@ export const convertCommodities = (prices, commodity) => R.map(
     1
   )
 );
-export const toDollars = prices => convertCommodities(prices, '$');
+export const toDollars = convertCommodities('$');

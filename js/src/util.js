@@ -3,8 +3,7 @@ const Decimal = require('decimal.js');
 
 // Debugging
 export const trace = R.curry((tag, x) => {
-  //console.log(tag, JSON.stringify(x));
-  console.log(tag, x);
+  console.log(tag, JSON.stringify(x));
   return x;
 });
 

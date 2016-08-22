@@ -56,6 +56,8 @@ Reports
    - Over Time
 
 Features
+ - Filter by time range
+ - Filter by account pattern
  - Upload data file
  - View reports
  - Drill in from chart to transactions
@@ -69,3 +71,4 @@ To Dos
  - consider using classes for transactions, postings, quantities, etc.
  - reorganize source directory, to better distinguish between UI and model
  - figure out null/undefined handling
+ - move commodity coversion to analysis step
