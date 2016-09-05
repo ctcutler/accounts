@@ -1,4 +1,6 @@
-import { splitN, flattenToPaths, parseDecimal, multDecimal, decimalIsZero } from '../src/util';
+import { splitN, flattenToPaths, parseDecimal, multDecimal, decimalIsZero,
+  mapAssoc
+  } from '../src/util';
 
 describe('flattenToPaths', function () {
   const input = {a: {b1: {c1: 42, c2: 43}}, x: {y: {z: 107}}, emp: {ty: {}}},
@@ -71,6 +73,104 @@ describe('splitN', function () {
       splitN(splitOn)(maxSplits)(input).length
     ).toBeLessThan(
       maxSplits
+    );
+  });
+});
+
+describe('mapAssoc', () => {
+  it('handles obj', () => {
+    expect(
+      mapAssoc(['a'], x => '#', {a: 1})
+    ).toEqual(
+      {a: '#'}
+    );
+  });
+
+  it('handles list', () => {
+    expect(
+      mapAssoc([], x => '#', [1, 2])
+    ).toEqual(
+      ['#', '#']
+    );
+  });
+
+  it('handles list, list', () => {
+    expect(
+      mapAssoc([], x => '#', [[1, 2], [1, 2]])
+    ).toEqual(
+      [['#', '#'], ['#', '#']]
+    );
+  });
+
+  it('handles obj, obj', () => {
+    expect(
+      mapAssoc(['a', 'b'], x => '#', {a: {b: 1}})
+    ).toEqual(
+      {a: {b: '#'}}
+    );
+  });
+
+  it('handles list, obj', () => {
+    expect(
+      mapAssoc(['a'], x => '#', [{a: 1}, {a: 2}])
+    ).toEqual(
+      [{a: '#'}, {a: '#'}]
+    );
+  });
+
+  it('handles obj, list', () => {
+    expect(
+      mapAssoc(['a'], x => '#', {a: [1, 2]})
+    ).toEqual(
+      {a: ['#', '#']}
+    );
+  });
+
+  it('handles obj, obj, list', () => {
+    expect(
+      mapAssoc(['a', 'b'], x => '#', {a: {b: [1, 2]}})
+    ).toEqual(
+      {a: {b: ['#', '#']}}
+    );
+  });
+
+  it('handles list, list, obj', () => {
+    expect(
+      mapAssoc(['a'], x => '#', [[{a: 1}, {a: 2}], [{a: 1}, {a: 2}]])
+    ).toEqual(
+      [[{a: '#'}, {a: '#'}], [{a: '#'}, {a: '#'}]]
+    );
+  });
+
+  it('handles list, obj, list', () => {
+    expect(
+      mapAssoc(['a'], x => '#', [{a: [1, 2]}, {a: [1, 2]}])
+    ).toEqual(
+      [{a: ['#', '#']}, {a: ['#', '#']}]
+    );
+  });
+
+  it('handles obj, list, obj', () => {
+    expect(
+      mapAssoc(['a', 'b'], x => '#', {a: [{b: 1}, {b: 2}]})
+    ).toEqual(
+      {a: [{b: '#'}, {b: '#'}]}
+    );
+  });
+
+  it('handles list, obj, obj', () => {
+    expect(
+      mapAssoc(['a', 'b'], x => '#', [{a: {b: 1}}, {a: {b: 1}}])
+    ).toEqual(
+      [{a: {b: '#'}}, {a: {b: '#'}}]
+    );
+  });
+
+  it('handles obj, list, list', () => {
+    expect(
+      mapAssoc(['a'], x => '#', {a: [[1, 2], [1, 2]]})
+    ).toEqual(
+      {a: [['#', '#'], ['#', '#']]}
     );
   });
 });

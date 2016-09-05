@@ -64,6 +64,20 @@ export const flattenToPaths = R.compose(
   R.flatten,
   makePaths([])
 );
+// takes a list of property names, a function, and a data structure composed
+// of arbitrarily nested objects and lists and uses list of property names to
+// drill into the data structure, mapping out lists when necessary, to apply
+// the function to the value of the last property in the list.
+// mapAssoc(['a', 'b'], x => 7, {a: [{b: 12}, {b: 13}]});
+// yields
+// {"a": [{"b": 7}, {"b": 7}]}
+export const mapAssoc = R.curry(
+  (p, f, d) => p.length === 0 && !R.is(Array, d)
+    ? f(d)
+    : R.is(Array, d)
+      ? R.map(el => mapAssoc(p, f, el), d)
+      : R.assoc(p[0], mapAssoc(p.slice(1), f, d[p[0]]), d)
+);
 
 // Logic
 export const applyIfTruthy = f => R.ifElse(R.identity, f, R.identity);
