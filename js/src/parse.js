@@ -59,7 +59,7 @@ export const postings = R.compose(R.map(posting), R.tail, lines);
  *     {
  *       account: 'Assets:Some Account:Another Sub-Account',
  *       amount: {quantity: Decimal(-0.0070), commodity: 'VEXAX'},
-         unitPrice: {quantity: Decimal(62.2100), commodity: '$'}
+ *       unitPrice: {quantity: Decimal(62.2100), commodity: '$'}
  *     },
  *     {
  *       account: 'Assets:Some Account:Sub-Account',
