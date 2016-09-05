@@ -71,4 +71,4 @@ To Dos
  - consider using classes for transactions, postings, quantities, etc.
  - reorganize source directory, to better distinguish between UI and model
  - figure out null/undefined handling
- - move commodity coversion to analysis step
+ - move commodity coversion to parsing step
