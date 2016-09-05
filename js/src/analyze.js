@@ -1,7 +1,7 @@
 Error.stackTraceLimit = Infinity;
 const R = require('ramda');
 import { trace, safeObjOf, safeAssoc, multDecimal, addDecimal, invertDecimal,
-  decimalIsZero } from './util';
+  decimalIsZero, parseDecimal, mapAssoc } from './util';
 
 export const mergeAmounts = R.mergeWith(addDecimal);
 export const unitQuantity = R.path(['unitPrice', 'quantity']);
@@ -27,15 +27,14 @@ export const balancedAmount = R.compose(
   R.filter(R.compose(R.not, R.isEmpty))
 );
 export const emptyKey = R.compose(R.head, R.keys, R.filter(R.isEmpty));
-export const balancePostings = mapping => safeAssoc(
+export const balancePostingsOld = mapping => safeAssoc(
   emptyKey(mapping),
   balancedAmount(mapping),
   mapping
 );
-const isExchange = R.compose(R.equals(1), R.length, R.keys);
 const reduceTrans = (acc, v) => R.compose(
   R.mergeWith(mergeAmounts, acc),
-  balancePostings,
+  balancePostingsOld,
   R.reduce(reducePosting, {}), // make account -> {commodity -> quantity} mapping
   R.prop('postings')
 )(v);
@@ -56,10 +55,22 @@ export const balance = R.compose(R.toPairs, balanceMap);
 export const filterBefore = d => R.filter(R.compose(R.gt(d), R.prop('date')));
 export const filterAfter = d => R.filter(R.compose(R.lt(d), R.prop('date')));
 
+export const sumQuantities = R.mergeWithKey((k, l, r) => k == 'quantity' ? addDecimal(l, r) : r);
+const getAmounts = R.compose(R.map(R.prop('amount')), R.init);
+export const balanceAmounts = R.compose(
+  amount => R.assoc('quantity', invertDecimal(amount.quantity), amount),
+  R.reduce(sumQuantities, {quantity: parseDecimal(0), commodity: ''}),
+  getAmounts
+);
+const balanceLast = postings => R.assoc('amount', balanceAmounts(postings), R.last(postings));
+export const balancePostings = postings => R.append(balanceLast(postings), R.init(postings));
+const balanceTransaction = trans => R.assoc('postings', balancePostings(trans.postings), trans);
+export const balanceTransactions = R.map(balanceTransaction);
+
 // FIXME: should commodity prices structure be the following?
 //{ fromcommodity: { tocommodity: [{date: Date(), price: Decimal()}]}}
 // FIXME: try first look up the price for everything, then doing the conversion
-const calculateConversion = R.ifElse(
+const calculateConversionOld = R.ifElse(
   (prices, pair) => R.has(pair[0], prices),
   (prices, pair) => multDecimal(prices[pair[0]].price, pair[1]),
   (prices, pair) => undefined
@@ -75,7 +86,6 @@ const convertCommodity = (prices, commodity) => R.unless(
 
 /* takes commodity to convert to, price mapping, list of [account, amount mapping] pairs;
    updates the amount mappings to the requested commodity or sets them to undefined */
-// FIXME: consider just taking a list of amount mapping objects, updating them in order
 export const convertCommodities = commodity => prices => R.map(
   R.adjust(
     R.compose(
@@ -87,3 +97,16 @@ export const convertCommodities = commodity => prices => R.map(
   )
 );
 export const toDollars = convertCommodities('$');
+const calculateConversion = R.ifElse(
+  (prices, amount) => R.has(amount.commodity, prices),
+  (prices, amount) => multDecimal(prices[amount.commodity].price, amount.quantity),
+  (prices, amount) => undefined
+);
+const sameCommodity = comm => R.compose(R.equals(comm), R.prop('commodity'));
+const newAmount = (commodity, prices) => R.applySpec({
+  commodity: R.always(commodity), quantity: calculateConversion(prices)
+})
+export const convertTransactions = commodity => prices => mapAssoc(
+  ['postings', 'amount'],
+  R.unless(sameCommodity(commodity), newAmount(commodity, prices))
+);

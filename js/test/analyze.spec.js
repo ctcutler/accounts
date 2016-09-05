@@ -1,8 +1,10 @@
 const R = require('ramda');
 import { parseDecimal } from '../src/util';
-import { balanceMap, balancePostings, mergeAmounts, amount, amounts,
+import { balanceMap, balancePostingsOld, mergeAmounts, amount, amounts,
          balancedAmount, emptyKey, filterAccount, filterBefore, filterAfter,
-         balance, convertCommodities } from '../src/analyze';
+         balance, convertCommodities, sumQuantities, balanceAmounts,
+         balancePostings, balanceTransactions, convertTransactions
+} from '../src/analyze';
 
 const transactions = [
   {
@@ -100,9 +102,9 @@ describe('balancedAmount', function () {
   });
 });
 
-describe('balancePostings', function () {
+describe('balancePostingsOld', function () {
   it('should balance postings', function () {
-    const balanced = balancePostings(accountMapping);
+    const balanced = balancePostingsOld(accountMapping);
     expect(balanced['Account 4']['$']).toEqual(parseDecimal(35.75));
     expect(balanced['Account 4']['FOOBAR']).toEqual(parseDecimal(123.45));
   });
@@ -194,5 +196,99 @@ describe('convertCommodities', function () {
       ['acct1', {'$': parseDecimal(2)}],
       ['acct2', {'$': parseDecimal(6), 'DOESNOTEXIST': undefined}],
     ]);
+  });
+});
+
+describe('sumQuantities', function () {
+  it('should add quantities and overwrite commodities', function () {
+    const amounts = [
+      { quantity: parseDecimal(-1.01) , commodity: 'FOO' },
+      { quantity: parseDecimal(-1.01) , commodity: '$' },
+    ];
+    expect(sumQuantities(amounts[0], amounts[1])).toEqual({
+      quantity: parseDecimal(-2.02), commodity: '$'
+    });
+  });
+});
+
+const postings = [
+  { amount: { quantity: parseDecimal(-1.01) , commodity: 'FOO' }},
+  { amount: { quantity: parseDecimal(-1.01) , commodity: '$' }},
+  { amount: {}}
+];
+
+describe('balanceAmounts', function () {
+  it('should return amount to balance ones in postings provided', function () {
+    expect(balanceAmounts(postings)).toEqual({
+      quantity: parseDecimal(2.02), commodity: '$'
+    });
+  });
+});
+
+describe('balancePostings', function () {
+  it('should balance the list of postings', function () {
+    expect(balancePostings(postings)[2].amount).toEqual({
+      quantity: parseDecimal(2.02), commodity: '$'
+    });
+  });
+});
+
+describe('balanceTransactions', function () {
+  it('should balance the list of transactions', function () {
+    const result = balanceTransactions(transactions);
+    expect(result[0].postings[1].amount).toEqual({
+      quantity: parseDecimal(34.52), commodity: '$'
+    });
+    expect(result[2].postings[1].amount).toEqual({
+      quantity: parseDecimal(34.52), commodity: '$'
+    });
+  });
+});
+
+describe('convertTransactions', () => {
+  it('should convert to $', () => {
+    const transactions = [
+      {
+        postings: [
+          {amount: {commodity: '$', quantity: parseDecimal(1.23)}},
+          {amount: {commodity: 'FOO', quantity: parseDecimal(2.34)}},
+          {amount: {commodity: 'UNKNOWN', quantity: parseDecimal(2.34)}},
+        ]
+      },
+      {
+        postings: [
+          {amount: {commodity: 'FOO', quantity: parseDecimal(3.45)}},
+        ]
+      },
+    ];
+    const prices = {
+      'FOO': {
+        date: new Date('2016/04/24'),
+        unit: '$',
+        price: parseDecimal('2')
+      },
+    };
+    const result = convertTransactions('$')(prices)(transactions);
+    console.log(result);
+    expect(
+      result[0].postings[0]
+    ).toEqual(
+      {amount: {commodity: '$', quantity: parseDecimal(1.23)}}
+    );
+    expect(
+      result[0].postings[1]
+    ).toEqual(
+      {amount: {commodity: '$', quantity: parseDecimal(4.68)}}
+    );
+    expect(
+      result[0].postings[2]
+    ).toEqual(
+      {amount: {commodity: '$', quantity: undefined}}
+    );
+    expect(
+      result[1].postings[0]
+    ).toEqual(
+      {amount: {commodity: '$', quantity: parseDecimal(6.90)}}
+    );
   });
 });
