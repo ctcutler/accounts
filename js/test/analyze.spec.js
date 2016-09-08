@@ -2,8 +2,8 @@ const R = require('ramda');
 import { parseDecimal } from '../src/util';
 import { balanceMap, balancePostingsOld, mergeAmounts, amount, amounts,
          balancedAmount, emptyKey, filterAccount, filterBefore, filterAfter,
-         balance, convertCommodities, sumQuantities, balanceAmounts,
-         balancePostings, balanceTransactions, convertTransactions
+         balance, sumQuantities, balanceAmounts, balancePostings,
+         balanceTransactions, convertTransactions
 } from '../src/analyze';
 
 const transactions = [
@@ -174,31 +174,6 @@ describe('filterAfter', function () {
   });
 });
 
-describe('convertCommodities', function () {
-  it('should convert all commodities in an object down to one', function () {
-    const prices = {
-      'MWTRX': {
-        date: new Date('2016/04/24'),
-        unit: '$',
-        price: parseDecimal('.5')
-      },
-      'QCEQIX': {
-        date: new Date('2016/04/24'),
-        unit: '$',
-        price: parseDecimal('2')
-      },
-    };
-    const input = [
-      ['acct1', {'$': parseDecimal(1), 'MWTRX': parseDecimal(2)}],
-      ['acct2', {'QCEQIX': parseDecimal(3), 'DOESNOTEXIST': parseDecimal(4)}]
-    ];
-    expect(convertCommodities('$')(prices)(input)).toEqual([
-      ['acct1', {'$': parseDecimal(2)}],
-      ['acct2', {'$': parseDecimal(6), 'DOESNOTEXIST': undefined}],
-    ]);
-  });
-});
-
 describe('sumQuantities', function () {
   it('should add quantities and overwrite commodities', function () {
     const amounts = [
@@ -268,8 +243,7 @@ describe('convertTransactions', () => {
         price: parseDecimal('2')
       },
     };
-    const result = convertTransactions('$')(prices)(transactions);
-    console.log(result);
+    const result = convertTransactions('$', prices)(transactions);
     expect(
       result[0].postings[0]
     ).toEqual(

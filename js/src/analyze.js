@@ -67,36 +67,6 @@ export const balancePostings = postings => R.append(balanceLast(postings), R.ini
 const balanceTransaction = trans => R.assoc('postings', balancePostings(trans.postings), trans);
 export const balanceTransactions = R.map(balanceTransaction);
 
-// FIXME: should commodity prices structure be the following?
-//{ fromcommodity: { tocommodity: [{date: Date(), price: Decimal()}]}}
-// FIXME: try first look up the price for everything, then doing the conversion
-const calculateConversionOld = R.ifElse(
-  (prices, pair) => R.has(pair[0], prices),
-  (prices, pair) => multDecimal(prices[pair[0]].price, pair[1]),
-  (prices, pair) => undefined
-);
-const convertCommodity = (prices, commodity) => R.unless(
-  R.compose(R.equals(commodity), R.nth(0)),
-  R.ifElse(
-    pair => R.has(pair[0], prices),
-    pair => [commodity, multDecimal(prices[pair[0]].price, pair[1])],
-    pair => [pair[0], undefined]
-  )
-);
-
-/* takes commodity to convert to, price mapping, list of [account, amount mapping] pairs;
-   updates the amount mappings to the requested commodity or sets them to undefined */
-export const convertCommodities = commodity => prices => R.map(
-  R.adjust(
-    R.compose(
-      R.reduce((acc, val) => R.mergeWith(addDecimal, acc, R.objOf(val[0], val[1])), {}),
-      R.map(convertCommodity(prices, commodity)),
-      R.toPairs
-    ),
-    1
-  )
-);
-export const toDollars = convertCommodities('$');
 const calculateConversion = R.ifElse(
   (prices, amount) => R.has(amount.commodity, prices),
   (prices, amount) => multDecimal(prices[amount.commodity].price, amount.quantity),
@@ -106,7 +76,7 @@ const sameCommodity = comm => R.compose(R.equals(comm), R.prop('commodity'));
 const newAmount = (commodity, prices) => R.applySpec({
   commodity: R.always(commodity), quantity: calculateConversion(prices)
 })
-export const convertTransactions = commodity => prices => mapAssoc(
+export const convertTransactions = (commodity, prices) => mapAssoc(
   ['postings', 'amount'],
   R.unless(sameCommodity(commodity), newAmount(commodity, prices))
 );
