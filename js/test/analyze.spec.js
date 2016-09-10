@@ -3,7 +3,8 @@ import { parseDecimal } from '../src/util';
 import { balanceMap, balancePostingsOld, mergeAmounts, amount, amounts,
          balancedAmount, emptyKey, filterAccount, filterBefore, filterAfter,
          balance, sumQuantities, balanceAmounts, balancePostings,
-         balanceTransactions, convertTransactions, overTime
+         balanceTransactions, convertTransactions, overDays, overWeeks,
+         overMonths, overYears
 } from '../src/analyze';
 
 const transactions = [
@@ -267,7 +268,7 @@ describe('convertTransactions', () => {
   });
 });
 
-describe('overTime', () => {
+describe('overDays', () => {
   const transactions = [
     {
       date: new Date('2014/02/14'),
@@ -302,20 +303,88 @@ describe('overTime', () => {
     },
   ];
   it('should only return quantities for matching accounts', () => {
-    const res = overTime(/^Foo:Baz$/)(transactions);
+    const res = overDays(/^Foo:Baz$/)(transactions);
     expect(res.length).toEqual(1);
     expect(res[0]).toEqual([new Date('2014/02/14'), parseDecimal(1.23)]);
   });
   it('should create a separate bucket for each date', () => {
-    const res = overTime(/^Foo:Quux$/)(transactions);
+    const res = overDays(/^Foo:Quux$/)(transactions);
     expect(res.length).toEqual(2);
     expect(res[0]).toEqual([new Date('2014/02/14'), parseDecimal(1.23)]);
     expect(res[1]).toEqual([new Date('2014/02/15'), parseDecimal(1.23)]);
   });
   it('should merge quantities regardless of transaction', () => {
-    const res = overTime(/^Foo:.+/)(transactions);
+    const res = overDays(/^Foo:.+/)(transactions);
     expect(res.length).toEqual(2);
     expect(res[0]).toEqual([new Date('2014/02/14'), parseDecimal(3.69)]);
     expect(res[1]).toEqual([new Date('2014/02/15'), parseDecimal(1.23)]);
+  });
+});
+
+describe('overWeeks', () => {
+  const transactions = [
+    {
+      date: new Date('2016/09/09'),
+      postings: [{amount: {quantity: parseDecimal(1.23)}, account: 'Foo:Bar'}]
+    },
+    {
+      date: new Date('2016/09/10'),
+      postings: [{amount: {quantity: parseDecimal(1.23)}, account: 'Foo:Bar'}]
+    },
+    {
+      date: new Date('2016/09/11'),
+      postings: [{amount: {quantity: parseDecimal(1.23)}, account: 'Foo:Bar'}]
+    },
+  ];
+  it('should merge quantities in the same week', () => {
+    const res = overWeeks(/^Foo:Bar$/)(transactions);
+    expect(res.length).toEqual(2);
+    expect(res[0]).toEqual([new Date('2016/09/04'), parseDecimal(2.46)]);
+    expect(res[1]).toEqual([new Date('2016/09/11'), parseDecimal(1.23)]);
+  });
+});
+
+describe('overMonths', () => {
+  const transactions = [
+    {
+      date: new Date('2016/09/09'),
+      postings: [{amount: {quantity: parseDecimal(1.23)}, account: 'Foo:Bar'}]
+    },
+    {
+      date: new Date('2016/09/10'),
+      postings: [{amount: {quantity: parseDecimal(1.23)}, account: 'Foo:Bar'}]
+    },
+    {
+      date: new Date('2016/10/01'),
+      postings: [{amount: {quantity: parseDecimal(1.23)}, account: 'Foo:Bar'}]
+    },
+  ];
+  it('should merge quantities in the same week', () => {
+    const res = overMonths(/^Foo:Bar$/)(transactions);
+    expect(res.length).toEqual(2);
+    expect(res[0]).toEqual([new Date('2016/09/01'), parseDecimal(2.46)]);
+    expect(res[1]).toEqual([new Date('2016/10/01'), parseDecimal(1.23)]);
+  });
+});
+describe('overYears', () => {
+  const transactions = [
+    {
+      date: new Date('2016/09/09'),
+      postings: [{amount: {quantity: parseDecimal(1.23)}, account: 'Foo:Bar'}]
+    },
+    {
+      date: new Date('2016/09/10'),
+      postings: [{amount: {quantity: parseDecimal(1.23)}, account: 'Foo:Bar'}]
+    },
+    {
+      date: new Date('2017/01/01'),
+      postings: [{amount: {quantity: parseDecimal(1.23)}, account: 'Foo:Bar'}]
+    },
+  ];
+  it('should merge quantities in the same week', () => {
+    const res = overYears(/^Foo:Bar$/)(transactions);
+    expect(res.length).toEqual(2);
+    expect(res[0]).toEqual([new Date('2016/01/01'), parseDecimal(2.46)]);
+    expect(res[1]).toEqual([new Date('2017/01/01'), parseDecimal(1.23)]);
   });
 });

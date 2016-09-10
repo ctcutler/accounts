@@ -1,5 +1,6 @@
 Error.stackTraceLimit = Infinity;
 const R = require('ramda');
+const moment = require('moment');
 import { trace, safeObjOf, safeAssoc, multDecimal, addDecimal, invertDecimal,
   decimalIsZero, parseDecimal, mapAssoc } from './util';
 
@@ -81,13 +82,13 @@ export const convertTransactions = (commodity, prices) => mapAssoc(
   R.unless(sameCommodity(commodity), newAmount(commodity, prices))
 );
 
-export const datedPostings = accountRE => R.compose(
+const datedPostings = (floorDate, accountRE) => R.compose(
   R.flatten,
   R.map(
     trans => R.map(
       R.ifElse(
         R.compose(R.test(accountRE), R.prop('account')),
-        posting => R.objOf(trans.date, posting.amount.quantity),
+        posting => R.objOf(floorDate(trans.date), posting.amount.quantity),
         posting => ({})
       ),
       trans.postings
@@ -95,10 +96,17 @@ export const datedPostings = accountRE => R.compose(
   )
 );
 
-export const overTime = accountRE => R.compose(
+const overTime = floorDate => accountRE => R.compose(
   R.sortBy(R.nth(0)),
   R.map(R.adjust(R.constructN(1, Date), 0)),
   R.toPairs,
   R.reduce(R.mergeWith(addDecimal), {}),
-  datedPostings(accountRE)
+  datedPostings(floorDate, accountRE)
 );
+
+const startOf = unit => d => moment(d).startOf(unit).toDate();
+
+export const overDays = overTime(startOf('day'));
+export const overWeeks = overTime(startOf('week'));
+export const overMonths = overTime(startOf('month'));
+export const overYears = overTime(startOf('year'));
