@@ -80,3 +80,25 @@ export const convertTransactions = (commodity, prices) => mapAssoc(
   ['postings', 'amount'],
   R.unless(sameCommodity(commodity), newAmount(commodity, prices))
 );
+
+export const datedPostings = accountRE => R.compose(
+  R.flatten,
+  R.map(
+    trans => R.map(
+      R.ifElse(
+        R.compose(R.test(accountRE), R.prop('account')),
+        posting => R.objOf(trans.date, posting.amount.quantity),
+        posting => ({})
+      ),
+      trans.postings
+    )
+  )
+);
+
+export const overTime = accountRE => R.compose(
+  R.sortBy(R.nth(0)),
+  R.map(R.adjust(R.constructN(1, Date), 0)),
+  R.toPairs,
+  R.reduce(R.mergeWith(addDecimal), {}),
+  datedPostings(accountRE)
+);

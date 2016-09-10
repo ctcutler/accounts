@@ -3,7 +3,7 @@ import { parseDecimal } from '../src/util';
 import { balanceMap, balancePostingsOld, mergeAmounts, amount, amounts,
          balancedAmount, emptyKey, filterAccount, filterBefore, filterAfter,
          balance, sumQuantities, balanceAmounts, balancePostings,
-         balanceTransactions, convertTransactions
+         balanceTransactions, convertTransactions, overTime
 } from '../src/analyze';
 
 const transactions = [
@@ -264,5 +264,58 @@ describe('convertTransactions', () => {
     ).toEqual(
       {amount: {commodity: '$', quantity: parseDecimal(6.90)}}
     );
+  });
+});
+
+describe('overTime', () => {
+  const transactions = [
+    {
+      date: new Date('2014/02/14'),
+      postings: [
+        {
+          amount: {quantity: parseDecimal(1.23)},
+          account: 'Foo:Bar'
+        },
+        {
+          amount: {quantity: parseDecimal(1.23)},
+          account: 'Foo:Quux'
+        },
+      ]
+    },
+    {
+      date: new Date('2014/02/14'),
+      postings: [
+        {
+          amount: {quantity: parseDecimal(1.23)},
+          account: 'Foo:Baz'
+        },
+      ]
+    },
+    {
+      date: new Date('2014/02/15'),
+      postings: [
+        {
+          amount: {quantity: parseDecimal(1.23)},
+          account: 'Foo:Quux'
+        },
+      ]
+    },
+  ];
+  it('should only return quantities for matching accounts', () => {
+    const res = overTime(/^Foo:Baz$/)(transactions);
+    expect(res.length).toEqual(1);
+    expect(res[0]).toEqual([new Date('2014/02/14'), parseDecimal(1.23)]);
+  });
+  it('should create a separate bucket for each date', () => {
+    const res = overTime(/^Foo:Quux$/)(transactions);
+    expect(res.length).toEqual(2);
+    expect(res[0]).toEqual([new Date('2014/02/14'), parseDecimal(1.23)]);
+    expect(res[1]).toEqual([new Date('2014/02/15'), parseDecimal(1.23)]);
+  });
+  it('should merge quantities regardless of transaction', () => {
+    const res = overTime(/^Foo:.+/)(transactions);
+    expect(res.length).toEqual(2);
+    expect(res[0]).toEqual([new Date('2014/02/14'), parseDecimal(3.69)]);
+    expect(res[1]).toEqual([new Date('2014/02/15'), parseDecimal(1.23)]);
   });
 });
