@@ -35,7 +35,11 @@ const timeSeries = R.compose(
 class TransactionList extends React.Component {
   render() {
     var transactionNodes = this.props.transactions.map(trans => {
-      return <Transaction key={trans.id} data={trans}></Transaction>;
+      return (
+        <tr key={trans.id}>
+          <td><Transaction data={trans}/></td>
+        </tr>
+      );
     });
     return <table><tbody>{transactionNodes}</tbody></table>;
   }
@@ -43,10 +47,21 @@ class TransactionList extends React.Component {
 
 class Transaction extends React.Component {
   render() {
-    return (<tr>
-      <td>{this.props.data.date.toString()}</td>
-      <td>{this.props.data.desc}</td>
-    </tr>);
+    const postings = this.props.data.postings.map((posting, i) => {
+      return (<tr key={i}>
+        <td>{posting.account}</td>
+        <td>{posting.amount.commodity}{posting.amount.quantity.toString()}</td>
+      </tr>);
+    });
+    return (<table>
+      <tbody>
+        <tr>
+          <td>{this.props.data.date.toString()}</td>
+          <td>{this.props.data.desc}</td>
+        </tr>
+        {postings}
+      </tbody>
+    </table>);
   }
 }
 
