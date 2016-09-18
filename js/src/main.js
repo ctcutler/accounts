@@ -1,6 +1,7 @@
 import { data } from './data';
 import { balance, toDollars, filterAccount, filterBefore, filterAfter,
-  balanceTransactions, convertTransactions, overMonths, overDays
+  balanceTransactions, convertTransactions, overMonths, overDays,
+  identifyTransactions
 } from './analyze';
 import { ledger } from './parse';
 import { trace } from './util';
@@ -12,30 +13,47 @@ const React = require('react');
 const ReactDOM = require('react-dom');
 
 const ledgerData = ledger(data);
+const transactions = R.compose(
+  identifyTransactions,
+  convertTransactions('$', ledgerData['commodityPrices']),
+  balanceTransactions,
+  filterBefore(new Date('2016/03/01')),
+  filterAfter(new Date('2016/01/01')),
+  R.prop('transactions')
+)(ledgerData);
 const columns = R.compose(
   R.map(R.adjust(R.prop('$'), 1)),
   filterAccount(/^Assets/),
-  balance,
-  convertTransactions('$', ledgerData['commodityPrices']),
-  balanceTransactions,
-  filterBefore(new Date('2016/03/01')),
-  filterAfter(new Date('2016/01/01')),
-  R.prop('transactions')
-)(ledgerData);
+  balance
+)(transactions);
 const timeSeries = R.compose(
   pairs => [R.pluck(0, pairs), R.pluck(1, pairs)],
   R.prepend(['x', 'data1']),
-  overDays(/^Assets/),
-  convertTransactions('$', ledgerData['commodityPrices']),
-  balanceTransactions,
-  filterBefore(new Date('2016/03/01')),
-  filterAfter(new Date('2016/01/01')),
-  R.prop('transactions')
-)(ledgerData);
+  overDays(/^Assets/)
+)(transactions);
+
+class TransactionList extends React.Component {
+  render() {
+    var transactionNodes = this.props.transactions.map(trans => {
+      return <Transaction key={trans.id} data={trans}></Transaction>;
+    });
+    return <table><tbody>{transactionNodes}</tbody></table>;
+  }
+}
+
+class Transaction extends React.Component {
+  render() {
+    return (<tr>
+      <td>{this.props.data.date.toString()}</td>
+      <td>{this.props.data.desc}</td>
+    </tr>);
+  }
+}
 
 const main = <div>
   <div id="pieChart"></div>
   <div id="timeSeriesChart"></div>
+  <TransactionList transactions={transactions}/>
 </div>;
 
 ReactDOM.render(

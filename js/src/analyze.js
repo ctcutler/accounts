@@ -82,6 +82,9 @@ export const convertTransactions = (commodity, prices) => mapAssoc(
   R.unless(sameCommodity(commodity), newAmount(commodity, prices))
 );
 
+export const identifyTransactions = txns =>
+  R.zipWith(R.assoc('id'), R.range(1, txns.length+1), txns);
+
 const datedPostings = (floorDate, accountRE) => R.compose(
   R.flatten,
   R.map(
@@ -110,3 +113,7 @@ export const overDays = overTime(startOf('day'));
 export const overWeeks = overTime(startOf('week'));
 export const overMonths = overTime(startOf('month'));
 export const overYears = overTime(startOf('year'));
+
+// FIXME: need method that maintains running balance over time,
+// probably just starts each time period value off at what the previous
+// one was
