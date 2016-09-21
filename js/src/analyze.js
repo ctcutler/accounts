@@ -82,6 +82,7 @@ export const convertTransactions = (commodity, prices) => mapAssoc(
   R.unless(sameCommodity(commodity), newAmount(commodity, prices))
 );
 
+// give every transaction a numeric id
 export const identifyTransactions = txns =>
   R.zipWith(R.assoc('id'), R.range(1, txns.length+1), txns);
 
@@ -114,6 +115,8 @@ export const overWeeks = overTime(startOf('week'));
 export const overMonths = overTime(startOf('month'));
 export const overYears = overTime(startOf('year'));
 
-// FIXME: need method that maintains running balance over time,
-// probably just starts each time period value off at what the previous
-// one was
+const mostRecent = acc => acc.length > 0 ? R.nth(-1, acc)[1] : parseDecimal(0);
+const newDataPoint = (acc, v) => [v[0], addDecimal(v[1], mostRecent(acc))];
+const runTotal = (acc, v) => R.append(newDataPoint(acc, v), acc);
+// takes sorted list of deltas by date, returns list of running totals by date
+export const runningTotal = R.reduce(runTotal, []);

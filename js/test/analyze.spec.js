@@ -4,7 +4,7 @@ import { balanceMap, balancePostingsOld, mergeAmounts, amount, amounts,
          balancedAmount, emptyKey, filterAccount, filterBefore, filterAfter,
          balance, sumQuantities, balanceAmounts, balancePostings,
          balanceTransactions, convertTransactions, overDays, overWeeks,
-         overMonths, overYears, identifyTransactions
+         overMonths, overYears, identifyTransactions, runningTotal
 } from '../src/analyze';
 
 const transactions = [
@@ -392,6 +392,17 @@ describe('identifyTransactions', () => {
   it('should assign a sequential identifier to each transaction', () => {
     expect(identifyTransactions([{}, {}, {}])).toEqual(
       [{id: 1}, {id: 2}, {id: 3}]
+    );
+  });
+});
+describe('runningTotal', () => {
+  it('should build running total through data points', () => {
+    expect(runningTotal([
+      ['d', parseDecimal(1)],
+      ['d', parseDecimal(1)],
+      ['d', parseDecimal(1)]
+    ])).toEqual(
+      [["d", parseDecimal(1)], ["d", parseDecimal(2)], ["d", parseDecimal(3)]]
     );
   });
 });
