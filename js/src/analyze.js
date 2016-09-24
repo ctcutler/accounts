@@ -43,6 +43,11 @@ export const balances = acctRE => R.compose(
   R.reduce(reduceTrans, {})
 );
 
+const anyPostingMatches = re => R.compose(
+  R.any(R.compose(R.test(re), R.prop('account'))),
+  R.prop('postings')
+);
+export const filterAccount = re => R.filter(anyPostingMatches(re));
 export const filterBefore = d => R.filter(R.compose(R.gt(d), R.prop('date')));
 export const filterAfter = d => R.filter(R.compose(R.lt(d), R.prop('date')));
 
