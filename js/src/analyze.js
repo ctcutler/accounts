@@ -34,10 +34,14 @@ export const removeZeroes = R.filter(
     R.map(R.compose(R.not, decimalIsZero))
   )
 );
-// [transaction] -> {account: {commodity: quantity}}
-export const balanceMap = R.compose(removeZeroes, R.reduce(reduceTrans, {}));
-export const filterAccount = re => R.filter(R.compose(R.test(re), R.nth(0)));
-export const balance = R.compose(R.toPairs, balanceMap);
+// [transaction] -> [[account, {commodity: quantity}], ...]
+export const balances = acctRE => R.compose(
+  R.sortBy(R.nth(0)),
+  R.filter(R.compose(R.test(acctRE), R.nth(0))),
+  R.toPairs,
+  removeZeroes,
+  R.reduce(reduceTrans, {})
+);
 
 export const filterBefore = d => R.filter(R.compose(R.gt(d), R.prop('date')));
 export const filterAfter = d => R.filter(R.compose(R.lt(d), R.prop('date')));

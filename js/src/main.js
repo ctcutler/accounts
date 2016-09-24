@@ -1,7 +1,6 @@
 import { data } from './data';
-import { balance, toDollars, filterAccount, filterBefore, filterAfter,
-  balanceTransactions, convertTransactions, overMonths, overDays,
-  identifyTransactions, runningTotal
+import { balances, toDollars, filterBefore, filterAfter, balanceTransactions,
+  convertTransactions, overMonths, overDays, identifyTransactions, runningTotal
 } from './analyze';
 import { ledger } from './parse';
 import { trace } from './util';
@@ -23,8 +22,7 @@ const transactions = R.compose(
 )(ledgerData);
 const columns = R.compose(
   R.map(R.adjust(R.prop('$'), 1)),
-  filterAccount(/^Assets/),
-  balance
+  balances(/^Assets/)
 )(transactions);
 const timeSeries = R.compose(
   pairs => [R.pluck(0, pairs), R.pluck(1, pairs)],

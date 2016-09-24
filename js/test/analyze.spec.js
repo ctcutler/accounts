@@ -1,10 +1,9 @@
 const R = require('ramda');
 import { parseDecimal } from '../src/util';
-import { balanceMap, mergeAmounts, amount, amounts,
-         filterAccount, filterBefore, filterAfter,
-         balance, sumQuantities, balanceAmounts, balancePostings,
-         balanceTransactions, convertTransactions, overDays, overWeeks,
-         overMonths, overYears, identifyTransactions, runningTotal
+import { balances, mergeAmounts, amount, amounts, filterBefore, filterAfter,
+         sumQuantities, balanceAmounts, balancePostings, balanceTransactions,
+         convertTransactions, overDays, overWeeks, overMonths, overYears,
+         identifyTransactions, runningTotal
 } from '../src/analyze';
 
 const transactions = [
@@ -105,35 +104,24 @@ describe('mergeAmounts', function () {
   });
 });
 
-describe('balanceMap', function () {
+describe('balances', function () {
   const prices = {CTC: { price: parseDecimal(23.45), unit: '$' }};
   const txns = R.compose(
     convertTransactions('$', prices),
     balanceTransactions
   )(transactions);
-  it('should return the right credit card balanceMap', function () {
-    expect(balanceMap(txns)['Liabilities:Credit Cards:MasterCard'])
-      .toEqual(undefined);
+  const re = /(Liabilities|Expenses|Assets)/;
+  const b = balances(re)(txns);
+  it('should return the right credit card balance', function () {
+    expect(b.length).toEqual(2);
   });
 
   it('should return the right groceries balance', function () {
-    expect(balanceMap(txns)['Expenses:Groceries']).toEqual({'$': parseDecimal(34.52)});
+    expect(b[1][1]).toEqual({'$': parseDecimal(34.52)});
   });
 
   it('should return the right bank account balance', function () {
-    expect(balanceMap(txns)['Assets:Bank Account:National Savings Bank'])
-      .toEqual({$: parseDecimal(-34.52)});
-  });
-});
-
-describe('filterAccount', function () {
-  it('should filter a balance list by account', function () {
-    const balanceList = [['Foo', 1], ['Bar', 2]];
-    expect(
-      filterAccount(/^F/)(balanceList)
-    ).toEqual(
-      [['Foo', 1]]
-    );
+    expect(b[0][1]).toEqual({'$': parseDecimal(-34.52)});
   });
 });
 
