@@ -43,13 +43,23 @@ export const balances = acctRE => R.compose(
   R.reduce(reduceTrans, {})
 );
 
-const anyPostingMatches = re => R.compose(
-  R.any(R.compose(R.test(re), R.prop('account'))),
-  R.prop('postings')
+export const filterAccount = re => R.filter(
+  R.compose(
+    R.any(R.compose(R.test(re), R.prop('account'))),
+    R.prop('postings')
+  )
 );
-export const filterAccount = re => R.filter(anyPostingMatches(re));
 export const filterBefore = d => R.filter(R.compose(R.gt(d), R.prop('date')));
 export const filterAfter = d => R.filter(R.compose(R.lt(d), R.prop('date')));
+export const filterNoOp = R.filter(
+  R.compose(
+    R.lt(1),
+    R.length,
+    R.uniq,
+    R.pluck('account'),
+    R.prop('postings')
+  )
+);
 
 export const sumQuantities = R.mergeWithKey((k, l, r) => k == 'quantity' ? addDecimal(l, r) : r);
 const getAmounts = R.compose(R.map(R.prop('amount')), R.init);

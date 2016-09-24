@@ -1,7 +1,7 @@
 import { data } from './data';
 import { balances, toDollars, filterBefore, filterAfter, balanceTransactions,
   convertTransactions, overMonths, overDays, identifyTransactions, runningTotal,
-  filterAccount
+  filterAccount, filterNoOp
 } from './analyze';
 import { ledger } from './parse';
 import { trace } from './util';
@@ -15,6 +15,7 @@ const ReactDOM = require('react-dom');
 const ledgerData = ledger(data);
 const accountRE = /^Assets/;
 const transactions = R.compose(
+  filterNoOp,
   identifyTransactions,
   convertTransactions('$', ledgerData['commodityPrices']),
   balanceTransactions,

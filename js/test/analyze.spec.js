@@ -3,7 +3,7 @@ import { parseDecimal } from '../src/util';
 import { balances, mergeAmounts, amount, amounts, filterBefore, filterAfter,
          sumQuantities, balanceAmounts, balancePostings, balanceTransactions,
          convertTransactions, overDays, overWeeks, overMonths, overYears,
-         identifyTransactions, runningTotal, filterAccount
+         identifyTransactions, runningTotal, filterAccount, filterNoOp
 } from '../src/analyze';
 
 const transactions = [
@@ -129,6 +129,12 @@ describe('filterAccount', function () {
   it('should filter transactions that have postings matching an account RE', function () {
     expect(filterAccount(/^Assets/)(transactions).length).toEqual(2);
     expect(filterAccount(/^BorkBork/)(transactions).length).toEqual(0);
+  });
+});
+
+describe('filterNoOp', function () {
+  it('should filter transactions that actually move money', function () {
+    expect(filterNoOp(transactions).length).toEqual(2);
   });
 });
 
