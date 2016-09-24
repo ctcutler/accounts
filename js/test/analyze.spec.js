@@ -1,7 +1,7 @@
 const R = require('ramda');
 import { parseDecimal } from '../src/util';
-import { balanceMap, balancePostingsOld, mergeAmounts, amount, amounts,
-         balancedAmount, emptyKey, filterAccount, filterBefore, filterAfter,
+import { balanceMap, mergeAmounts, amount, amounts,
+         filterAccount, filterBefore, filterAfter,
          balance, sumQuantities, balanceAmounts, balancePostings,
          balanceTransactions, convertTransactions, overDays, overWeeks,
          overMonths, overYears, identifyTransactions, runningTotal
@@ -31,7 +31,7 @@ const transactions = [
         amount: {
             quantity: parseDecimal(-22.33),
             commodity: 'CTC',
-            unitPrice: { quantity: 23.45, commodity: '$' }
+            unitPrice: { quantity: parseDecimal(23.45), commodity: '$' }
         }
       },
       {
@@ -87,30 +87,6 @@ const accountMapping = {
   'Account 4': {}
 };
 
-describe('emptyKey', function () {
-  it('should return the key that corresponds to an empty object', function () {
-    expect(emptyKey(accountMapping)).toEqual('Account 4');
-  });
-});
-
-describe('balancedAmount', function () {
-  it('should return the balanced amount', function () {
-    expect(
-      balancedAmount(accountMapping)
-    ).toEqual(
-      {'$': parseDecimal(35.75), 'FOOBAR': parseDecimal(123.45)}
-    );
-  });
-});
-
-describe('balancePostingsOld', function () {
-  it('should balance postings', function () {
-    const balanced = balancePostingsOld(accountMapping);
-    expect(balanced['Account 4']['$']).toEqual(parseDecimal(35.75));
-    expect(balanced['Account 4']['FOOBAR']).toEqual(parseDecimal(123.45));
-  });
-});
-
 describe('mergeAmounts', function () {
   it('should properly merge different commodities', function () {
     const merged = mergeAmounts(
@@ -130,23 +106,23 @@ describe('mergeAmounts', function () {
 });
 
 describe('balanceMap', function () {
+  const prices = {CTC: { price: parseDecimal(23.45), unit: '$' }};
+  const txns = R.compose(
+    convertTransactions('$', prices),
+    balanceTransactions
+  )(transactions);
   it('should return the right credit card balanceMap', function () {
-    expect(balanceMap(transactions)['Liabilities:Credit Cards:MasterCard'])
+    expect(balanceMap(txns)['Liabilities:Credit Cards:MasterCard'])
       .toEqual(undefined);
   });
 
   it('should return the right groceries balance', function () {
-    expect(balanceMap(transactions)['Expenses:Groceries']).toEqual({'$': parseDecimal(34.52)});
+    expect(balanceMap(txns)['Expenses:Groceries']).toEqual({'$': parseDecimal(34.52)});
   });
 
   it('should return the right bank account balance', function () {
-    expect(balanceMap(transactions)['Assets:Bank Account:National Savings Bank'])
+    expect(balanceMap(txns)['Assets:Bank Account:National Savings Bank'])
       .toEqual({$: parseDecimal(-34.52)});
-  });
-
-  it('should return the right brokerage account balance', function () {
-    expect(balanceMap(transactions)['Assets:Brokerage Account'])
-      .toEqual({CTC: parseDecimal(-22.33), $: parseDecimal(523.6385)});
   });
 });
 
@@ -214,6 +190,11 @@ describe('balanceTransactions', function () {
     const result = balanceTransactions(transactions);
     expect(result[0].postings[1].amount).toEqual({
       quantity: parseDecimal(34.52), commodity: '$'
+    });
+    expect(result[1].postings[1].amount).toEqual({
+      quantity: parseDecimal(22.33),
+      commodity: 'CTC',
+      unitPrice: { quantity: parseDecimal(23.45), commodity: '$' }
     });
     expect(result[2].postings[1].amount).toEqual({
       quantity: parseDecimal(34.52), commodity: '$'

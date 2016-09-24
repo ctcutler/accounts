@@ -20,22 +20,8 @@ export const amount = R.compose(
 export const reducePosting = (acc, p) => R.mergeWith(
   mergeAmounts, R.objOf(p['account'], amount(p)), acc
 );
-const invertValues = R.map(invertDecimal);
-export const balancedAmount = R.compose(
-  R.reduce(mergeAmounts, {}),
-  R.map(invertValues),
-  R.values,
-  R.filter(R.compose(R.not, R.isEmpty))
-);
-export const emptyKey = R.compose(R.head, R.keys, R.filter(R.isEmpty));
-export const balancePostingsOld = mapping => safeAssoc(
-  emptyKey(mapping),
-  balancedAmount(mapping),
-  mapping
-);
 const reduceTrans = (acc, v) => R.compose(
   R.mergeWith(mergeAmounts, acc),
-  balancePostingsOld,
   R.reduce(reducePosting, {}), // make account -> {commodity -> quantity} mapping
   R.prop('postings')
 )(v);
