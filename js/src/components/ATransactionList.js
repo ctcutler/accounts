@@ -1,9 +1,13 @@
 import React from 'react';
-
+const R = require('ramda');
+import { filterNoOp, identifyTransactions, filterAccount } from '../analyze';
 
 class ATransactionList extends React.Component {
   render() {
-    var transactionNodes = this.props.transactions.map(trans => {
+    const txns = R.compose(
+      filterNoOp, identifyTransactions, filterAccount(/^Assets/)
+    )(this.props.transactions);
+    var transactionNodes = txns.map(trans => {
       return (
         <tr key={trans.id}>
           <td><Transaction data={trans}/></td>

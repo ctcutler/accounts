@@ -5,35 +5,15 @@ import ATimeSeriesChart from './ATimeSeriesChart';
 import ATransactionList from './ATransactionList';
 
 import { data } from '../data';
-import { balances, toDollars, filterBefore, filterAfter, balanceTransactions,
-  convertTransactions, overMonths, overDays, identifyTransactions, runningTotal,
-  filterAccount, filterNoOp
-} from '../analyze';
+import { balanceTransactions, convertTransactions } from '../analyze';
 import { ledger } from '../parse';
 import { trace } from '../util';
 const R = require('ramda');
 const ledgerData = ledger(data);
-const accountRE = /^Assets/;
 const transactions = R.compose(
-  filterNoOp,
-  identifyTransactions,
   convertTransactions('$', ledgerData['commodityPrices']),
-  balanceTransactions,
-  filterAccount(accountRE),
-  filterBefore(new Date('2016/03/01')),
-  filterAfter(new Date('2016/01/01')),
-  R.prop('transactions')
-)(ledgerData);
-const columns = R.compose(
-  R.map(R.adjust(R.prop('$'), 1)),
-  balances(accountRE)
-)(transactions);
-const timeSeries = R.compose(
-  pairs => [R.pluck(0, pairs), R.pluck(1, pairs)],
-  R.prepend(['x', 'data1']),
-  runningTotal,
-  overDays(accountRE)
-)(transactions);
+  balanceTransactions
+)(ledgerData.transactions);
 
 const MainTabs = () => (
   <Tabs>
@@ -48,8 +28,8 @@ const MainTabs = () => (
     </Tab>
     <Tab label="Demo">
       <p>Demo!</p>
-      <APieChart data={columns}/>
-      <ATimeSeriesChart data={timeSeries}/>
+      <APieChart transactions={transactions}/>
+      <ATimeSeriesChart transactions={transactions}/>
       <ATransactionList transactions={transactions}/>
     </Tab>
   </Tabs>

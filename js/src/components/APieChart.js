@@ -1,11 +1,17 @@
 import React from 'react';
 const d3 = require('d3');
 const c3 = require('c3');
+const R = require('ramda');
+import { balances } from '../analyze';
 
 class APieChart extends React.Component {
 
-  _renderChart(columns) {
-    const pieChart = c3.generate({
+  _renderChart(transactions) {
+    const columns = R.compose(
+      R.map(R.adjust(R.prop('$'), 1)),
+      balances(/^Assets/)
+    )(transactions);
+    c3.generate({
         bindto: '#aPieChart',
         size: {
           height: 700
@@ -18,7 +24,7 @@ class APieChart extends React.Component {
   }
 
   componentDidMount() {
-    this._renderChart(this.props.data);
+    this._renderChart(this.props.transactions);
   }
 
   render() {
