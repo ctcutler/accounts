@@ -37,11 +37,15 @@
     "c3": "^0.4.11",
     "decimal.js": "^5.0.8",
     "lodash-es": "^4.12.0",
+    "material-ui": "^0.15.4",
     "moment": "^2.14.1",
     "monet": "^0.8.10",
     "ramda": "^0.21.0",
+    "react": "^15.3.2",
+    "react-dom": "^15.3.2",
     "react": "^15.2.1",
     "react-dom": "^15.2.1",
+    "react-tap-event-plugin": "^1.0.0",
     "sanctuary": "^0.11.1"
   }
 }

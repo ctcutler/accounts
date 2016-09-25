@@ -19,7 +19,7 @@ gulp.task('build', function () {
 });
 
 gulp.task('watch', function() {
-    gulp.watch('./js/*/*.js', ['test', 'build']);
+    gulp.watch('./js/**/*.js', ['test', 'build']);
 });
 
 gulp.task('test', function (done) {
