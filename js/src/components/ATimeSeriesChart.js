@@ -2,7 +2,7 @@ import React from 'react';
 const d3 = require('d3');
 const c3 = require('c3');
 const R = require('ramda');
-import {overDays, runningTotal} from '../analyze';
+import {overMonths, runningTotal} from '../analyze';
 
 class ATimeSeriesChart extends React.Component {
 
@@ -11,7 +11,7 @@ class ATimeSeriesChart extends React.Component {
       pairs => [R.pluck(0, pairs), R.pluck(1, pairs)],
       R.prepend(['x', 'data1']),
       runningTotal,
-      overDays(/^Assets/)
+      overMonths(/^Assets/)
     )(transactions);
     c3.generate({
         bindto: '#aTimeSeriesChart',

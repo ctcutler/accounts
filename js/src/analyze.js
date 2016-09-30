@@ -120,6 +120,22 @@ export const overWeeks = overTime(startOf('week'));
 export const overMonths = overTime(startOf('month'));
 export const overYears = overTime(startOf('year'));
 
+const addOne = (unit, d) => moment(d).add(1, unit).toDate();
+const shouldAddBefore = (unit, acc, v) =>
+  R.length(acc) > 0 && addOne(unit, R.last(acc)[0]) < v[0];
+const appendNew = (unit, acc) =>
+  R.append([addOne(unit, R.last(acc)[0]), null], acc);
+const addBefore = unit => (acc, v) =>
+  shouldAddBefore(unit, acc, v)
+  ? addBefore(unit)(appendNew(unit, acc), v)
+  : R.append(v, acc);
+
+const fillIn = unit => R.reduce(addBefore(unit), []);
+export const fillInDays = fillIn('day');
+export const fillInWeeks = fillIn('week');
+export const fillInMonths = fillIn('month');
+export const fillInYears = fillIn('year');
+
 const mostRecent = acc => acc.length > 0 ? R.nth(-1, acc)[1] : parseDecimal(0);
 const newDataPoint = (acc, v) => [v[0], addDecimal(v[1], mostRecent(acc))];
 const runTotal = (acc, v) => R.append(newDataPoint(acc, v), acc);

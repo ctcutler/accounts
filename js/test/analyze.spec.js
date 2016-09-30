@@ -3,7 +3,8 @@ import { parseDecimal } from '../src/util';
 import { balances, mergeAmounts, amount, amounts, filterBefore, filterAfter,
          sumQuantities, balanceAmounts, balancePostings, balanceTransactions,
          convertTransactions, overDays, overWeeks, overMonths, overYears,
-         identifyTransactions, runningTotal, filterAccount, filterNoOp
+         identifyTransactions, runningTotal, filterAccount, filterNoOp,
+         fillInDays, fillInWeeks, fillInMonths, fillInYears
 } from '../src/analyze';
 
 const transactions = [
@@ -247,6 +248,90 @@ describe('convertTransactions', () => {
     ).toEqual(
       {amount: {commodity: '$', quantity: parseDecimal(6.90)}}
     );
+  });
+});
+
+describe('fillInDays', () => {
+  it('fill in days when there are gaps', () => {
+    const series = [
+      [new Date('2016-09-30 00:00:00'), parseDecimal(123)],
+      [new Date('2016-10-03 00:00:00'), parseDecimal(123)],
+    ];
+    const res = fillInDays(series);
+    expect(res.length).toEqual(4);
+    expect(res[0]).toEqual(series[0]);
+    expect(res[1]).toEqual([new Date('2016-10-01 00:00:00'), null]);
+  });
+  it('not fill in days when there are not gaps', () => {
+    const series = [
+      [new Date('2016-09-30 00:00:00'), parseDecimal(123)],
+      [new Date('2016-10-01 00:00:00'), parseDecimal(123)],
+    ];
+    const res = fillInDays(series);
+    expect(res).toEqual(series);
+  });
+});
+
+describe('fillInWeeks', () => {
+  it('fill in weeks when there are gaps', () => {
+    const series = [
+      [new Date('2016-09-25 00:00:00'), parseDecimal(123)],
+      [new Date('2016-10-16 00:00:00'), parseDecimal(123)],
+    ];
+    const res = fillInWeeks(series);
+    expect(res.length).toEqual(4);
+    expect(res[0]).toEqual(series[0]);
+    expect(res[1]).toEqual([new Date('2016-10-02 00:00:00'), null]);
+  });
+  it('not fill in weeks when there are not gaps', () => {
+    const series = [
+      [new Date('2016-09-25 00:00:00'), parseDecimal(123)],
+      [new Date('2016-10-02 00:00:00'), parseDecimal(123)],
+    ];
+    const res = fillInWeeks(series);
+    expect(res).toEqual(series);
+  });
+});
+
+describe('fillInMonths', () => {
+  it('fill in months when there are gaps', () => {
+    const series = [
+      [new Date('2016-10-01 00:00:00'), parseDecimal(123)],
+      [new Date('2017-01-01 00:00:00'), parseDecimal(123)],
+    ];
+    const res = fillInMonths(series);
+    expect(res.length).toEqual(4);
+    expect(res[0]).toEqual(series[0]);
+    expect(res[1]).toEqual([new Date('2016-11-01 00:00:00'), null]);
+  });
+  it('not fill in months when there are not gaps', () => {
+    const series = [
+      [new Date('2016-10-01 00:00:00'), parseDecimal(123)],
+      [new Date('2016-11-01 00:00:00'), parseDecimal(123)],
+    ];
+    const res = fillInMonths(series);
+    expect(res).toEqual(series);
+  });
+});
+
+describe('fillInYears', () => {
+  it('fill in years when there are gaps', () => {
+    const series = [
+      [new Date('2016-01-01 00:00:00'), parseDecimal(123)],
+      [new Date('2019-01-01 00:00:00'), parseDecimal(123)],
+    ];
+    const res = fillInYears(series);
+    expect(res.length).toEqual(4);
+    expect(res[0]).toEqual(series[0]);
+    expect(res[1]).toEqual([new Date('2017-01-01 00:00:00'), null]);
+  });
+  it('not fill in years when there are not gaps', () => {
+    const series = [
+      [new Date('2016-01-01 00:00:00'), parseDecimal(123)],
+      [new Date('2017-01-01 00:00:00'), parseDecimal(123)],
+    ];
+    const res = fillInYears(series);
+    expect(res).toEqual(series);
   });
 });
 
