@@ -3,7 +3,7 @@ const d3 = require('d3');
 const c3 = require('c3');
 const R = require('ramda');
 import { overMonths, runningTotal, fillInMonths } from '../analyze';
-import { addDecimal } from '../util';
+import { addDecimal, parseDecimal } from '../util';
 
 class NetWorth extends React.Component {
 
@@ -11,7 +11,7 @@ class NetWorth extends React.Component {
     // FIXME: write function to normalize time ranges rather than hard coding
     // that R.drop(6). . . be sure to normalize *after* calculating running totals
     const assetSeries = R.compose(
-      R.drop(6),
+      R.drop(5),
       fillInMonths,
       runningTotal,
       overMonths(/^Assets/)
@@ -31,7 +31,6 @@ class NetWorth extends React.Component {
         R.prepend('Liabilities', R.pluck(1, liabilitySeries)),
         R.prepend('netWorth', calcDelta(assetSeries, liabilitySeries))
     ];
-
     c3.generate({
       bindto: '#netWorthChart',
       data: {
@@ -48,9 +47,19 @@ class NetWorth extends React.Component {
           netWorth: '#000000',
         }
       },
+      size: {
+        height: 700
+      },
       axis: {
         x: {
           type: 'timeseries',
+        }
+      },
+      tooltip: {
+        format: {
+          // from: http://stackoverflow.com/questions/149055/how-can-i-format-numbers-as-money-in-javascript
+          value: (value, ratio, id, index) =>
+            value.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')
         }
       },
       point: {
