@@ -3,6 +3,7 @@ import {Tabs, Tab} from 'material-ui/Tabs';
 import APieChart from './APieChart';
 import ATimeSeriesChart from './ATimeSeriesChart';
 import ATransactionList from './ATransactionList';
+import NetWorth from './NetWorth';
 
 import { data } from '../data';
 import { balanceTransactions, convertTransactions } from '../analyze';
@@ -18,7 +19,7 @@ const transactions = R.compose(
 const MainTabs = () => (
   <Tabs>
     <Tab label="Net Worth">
-      <p>Net Worth!</p>
+      <NetWorth transactions={transactions}/>
     </Tab>
     <Tab label="Income & Expenses">
       <p>Income & Expenses!</p>
