@@ -10,6 +10,12 @@ export const trace = R.curry((tag, x) => {
   return x;
 });
 
+// Dates
+export const equalDates = (d1, d2) =>
+  d1 && d2
+  && d1 instanceof Date && d2 instanceof Date
+  && d1.getTime() === d2.getTime();
+
 // Numbers
 export const parseDecimal = R.constructN(1, Decimal);
 export const addDecimal = R.ifElse(

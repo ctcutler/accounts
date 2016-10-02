@@ -1,6 +1,7 @@
-import { splitN, flattenToPaths, parseDecimal, multDecimal, decimalIsZero,
-  mapAssoc
-  } from '../src/util';
+import {
+  splitN, flattenToPaths, parseDecimal, multDecimal, decimalIsZero,
+  mapAssoc, equalDates
+} from '../src/util';
 
 describe('flattenToPaths', function () {
   const input = {a: {b1: {c1: 42, c2: 43}}, x: {y: {z: 107}}, emp: {ty: {}}},
@@ -172,5 +173,14 @@ describe('mapAssoc', () => {
     ).toEqual(
       {a: [['#', '#'], ['#', '#']]}
     );
+  });
+});
+
+describe('equalDates', () => {
+  it('should report equal dates', () => {
+    expect(equalDates(new Date('2016-01-01'), new Date('2016-01-01'))).toBe(true);
+  });
+  it('should report unequal dates', () => {
+    expect(equalDates(new Date('2016-01-01'), new Date('2016-01-02'))).toBe(false);
   });
 });
