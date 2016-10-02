@@ -26,6 +26,7 @@ class SavingRate extends React.Component {
       (x, y) => R.when(v => v === undefined, v => null, addDecimal(x[1], y[1]))
     )(incomeSeries, expensesSeries);
 
+    // FIXME: abstract better and move to analyze.js
     // base on the formula found here: http://math.stackexchange.com/questions/204020/what-is-the-equation-used-to-calculate-a-linear-trendline/204021#204021
     const lrSlope = (xs, ys) =>
       (

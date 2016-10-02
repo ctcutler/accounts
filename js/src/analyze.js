@@ -2,7 +2,7 @@ Error.stackTraceLimit = Infinity;
 const R = require('ramda');
 const moment = require('moment');
 import { trace, safeObjOf, safeAssoc, multDecimal, addDecimal, invertDecimal,
-  decimalIsZero, parseDecimal, mapAssoc } from './util';
+  decimalIsZero, parseDecimal, mapAssoc, equalDates } from './util';
 
 export const mergeAmounts = R.mergeWith(addDecimal);
 export const unitQuantity = R.path(['unitPrice', 'quantity']);
@@ -135,6 +135,30 @@ export const fillInDays = fillIn('day');
 export const fillInWeeks = fillIn('week');
 export const fillInMonths = fillIn('month');
 export const fillInYears = fillIn('year');
+
+export const minTs = R.compose(
+  R.reduce(R.min, Infinity),
+  R.map(R.path(['0', '0']))
+);
+export const maxTs = R.compose(
+  R.reduce(R.max, 0),
+  R.map(R.compose(R.nth(0), R.last))
+);
+export const prependMin = series => s =>
+  equalDates(s[0][0], minTs(series))
+    ? s
+    : R.prepend([minTs(series), null], s);
+export const appendMax = series => s =>
+  equalDates(R.last(s)[0], maxTs(series))
+    ? s
+    : R.append([maxTs(series), null], s);
+
+/* normalize series date ranges to the widest possible range */
+export const normalizeMax = unit => series => R.compose(
+  R.map(fillIn(unit)),
+  R.map(prependMin(series)),
+  R.map(appendMax(series))
+)(series);
 
 const mostRecent = acc => acc.length > 0 ? R.nth(-1, acc)[1] : parseDecimal(0);
 const newDataPoint = (acc, v) => [v[0], addDecimal(v[1], mostRecent(acc))];

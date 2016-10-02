@@ -4,7 +4,8 @@ import { balances, mergeAmounts, amount, amounts, filterBefore, filterAfter,
          sumQuantities, balanceAmounts, balancePostings, balanceTransactions,
          convertTransactions, overDays, overWeeks, overMonths, overYears,
          identifyTransactions, runningTotal, filterAccount, filterNoOp,
-         fillInDays, fillInWeeks, fillInMonths, fillInYears
+         fillInDays, fillInWeeks, fillInMonths, fillInYears, minTs, maxTs,
+         appendMax, prependMin, normalizeMax
 } from '../src/analyze';
 
 const transactions = [
@@ -471,5 +472,65 @@ describe('runningTotal', () => {
     ])).toEqual(
       [["d", parseDecimal(1)], ["d", parseDecimal(2)], ["d", parseDecimal(3)]]
     );
+  });
+});
+
+describe('minTs', () => {
+  it('should return the smallest timestamp', () => {
+    const l = [
+      [[new Date('2016-09-02'), null]],
+      [[new Date('2016-09-01'), null]],
+      [[new Date('2016-09-03'), null]],
+    ];
+    expect(minTs(l)).toBe(l[1][0][0]);
+  });
+});
+describe('maxTs', () => {
+  it('should return the largest timestamp', () => {
+    const l = [
+      [[new Date('2016-09-02'), null]],
+      [[new Date('2016-09-01'), null]],
+      [[new Date('2016-09-03'), null]],
+    ];
+    expect(maxTs(l)).toBe(l[2][0][0]);
+  });
+});
+
+describe('prependMin', () => {
+  it('should prepend the min timestamp', () => {
+    const l = [
+      [[new Date('2016-09-02'), null]],
+      [[new Date('2016-09-01'), null]],
+      [[new Date('2016-09-03'), null]],
+    ];
+    expect(prependMin(l)(l[0])[0][0]).toBe(l[1][0][0]);
+    expect(prependMin(l)(l[1]).length).toBe(1);
+  });
+});
+describe('appendMax', () => {
+  it('should append the max timestamp', () => {
+    const l = [
+      [[new Date('2016-09-02'), null]],
+      [[new Date('2016-09-01'), null]],
+      [[new Date('2016-09-03'), null]],
+    ];
+    expect(appendMax(l)(l[1])[1][0]).toBe(l[2][0][0]);
+    expect(appendMax(l)(l[2]).length).toBe(1);
+  });
+});
+
+describe('normalizeMax', () => {
+  it('should normalizes the timestamps to the widest range', () => {
+    const l = [
+      [[new Date('2016-09-02 00:00:00'), null]],
+      [[new Date('2016-09-01 00:00:00'), null]], // broken, extra 1
+      [[new Date('2016-09-03 00:00:00'), null]], // broken, extra 3
+    ];
+    const expected = [
+      [[new Date('2016-09-01 00:00:00'), null],[new Date('2016-09-02 00:00:00'), null],[new Date('2016-09-03 00:00:00'), null],],
+      [[new Date('2016-09-01 00:00:00'), null],[new Date('2016-09-02 00:00:00'), null],[new Date('2016-09-03 00:00:00'), null],],
+      [[new Date('2016-09-01 00:00:00'), null],[new Date('2016-09-02 00:00:00'), null],[new Date('2016-09-03 00:00:00'), null],],
+    ];
+    expect(normalizeMax('day')(l)).toEqual(expected);
   });
 });
