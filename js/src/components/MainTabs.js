@@ -3,6 +3,7 @@ import {Tabs, Tab} from 'material-ui/Tabs';
 import APieChart from './APieChart';
 import ATimeSeriesChart from './ATimeSeriesChart';
 import ATransactionList from './ATransactionList';
+import Expenses from './Expenses';
 import Income from './Income';
 import SavingRate from './SavingRate';
 import NetWorth from './NetWorth';
@@ -25,6 +26,7 @@ const MainTabs = () => (
     </Tab>
     <Tab label="Income & Expenses">
       <Income transactions={transactions}/>
+      <Expenses transactions={transactions}/>
     </Tab>
     <Tab label="Savings Rate">
       <SavingRate transactions={transactions}/>
