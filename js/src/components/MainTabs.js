@@ -15,34 +15,69 @@ import { data } from '../data';
 import { balanceTransactions, convertTransactions } from '../analyze';
 import { ledger } from '../parse';
 import { trace } from '../util';
-const ledgerData = ledger(data);
-const transactions = R.compose(
-  convertTransactions('$', ledgerData['commodityPrices']),
-  balanceTransactions
-)(ledgerData.transactions);
 
-const MainTabs = () => (
-  <Tabs>
-    <Tab label="Net Worth">
-      <NetWorth transactions={transactions}/>
-    </Tab>
-    <Tab label="Income & Expenses">
-      <Income transactions={transactions}/>
-      <Expenses transactions={transactions}/>
-    </Tab>
-    <Tab label="Savings Rate">
-      <SavingRate transactions={transactions}/>
-    </Tab>
-    <Tab label="Data File">
-      <DataFile/>
-    </Tab>
-    <Tab label="Demo">
-      <p>Demo!</p>
-      <APieChart transactions={transactions}/>
-      <ATimeSeriesChart transactions={transactions}/>
-      <ATransactionList transactions={transactions}/>
-    </Tab>
-  </Tabs>
-);
+class MainTabs extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleFileLoad = this.handleFileLoad.bind(this);
+    this.state = this.loadFromStorage();
+  }
+
+  loadFromStorage() {
+    if (localStorage.ledgerData) {
+      const ledgerData = ledger(localStorage.ledgerData);
+      const transactions = R.compose(
+        convertTransactions('$', ledgerData['commodityPrices']),
+        balanceTransactions
+      )(ledgerData.transactions);
+      return {
+        fileName: localStorage.ledgerFileName,
+        fileDate: localStorage.ledgerFileDate,
+        transactions
+      };
+    } else {
+      return { fileName: "", fileDate: "", transactions: [] };
+    }
+  }
+
+  handleFileLoad(name, date, data) {
+    localStorage.setItem('ledgerFileName', name);
+    localStorage.setItem('ledgerFileDate', date);
+    localStorage.setItem('ledgerData', data);
+
+    this.setState(this.loadFromStorage());
+    // FIXME: after load, render methods on all components get called
+    // but charts don't get re-loaded. . . wonder if this is a reload
+    // issue with c3. . . when the page gets reloaded, the first chart
+    // does load but stops with:
+    //   Uncaught TypeError: undefined does not have a method named "isZero"
+  }
+
+  render() {
+    return <Tabs>
+      <Tab label="Net Worth">
+        <NetWorth transactions={this.state.transactions}/>
+      </Tab>
+      <Tab label="Income & Expenses">
+        <Income transactions={this.state.transactions}/>
+        <Expenses transactions={this.state.transactions}/>
+      </Tab>
+      <Tab label="Savings Rate">
+        <SavingRate transactions={this.state.transactions}/>
+      </Tab>
+      <Tab label="Data File">
+        <DataFile onFileLoad={this.handleFileLoad}
+          fileDate={this.state.fileDate}
+          fileName={this.state.fileName}/>
+      </Tab>
+      <Tab label="Demo">
+        <p>Demo!</p>
+        <APieChart transactions={this.state.transactions}/>
+        <ATimeSeriesChart transactions={this.state.transactions}/>
+        <ATransactionList transactions={this.state.transactions}/>
+      </Tab>
+    </Tabs>;
+  }
+}
 
 export default MainTabs;

@@ -10,6 +10,8 @@ import { addDecimal, parseDecimal, invertDecimal } from '../util';
 class Income extends React.Component {
 
   _renderChart(transactions) {
+    if (!transactions || transactions.length === 0) return;
+
     const accountRE = /^Income/;
     // FIXME: clean up and abstract all this
     const accounts = R.compose(

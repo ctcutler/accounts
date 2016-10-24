@@ -10,6 +10,8 @@ import { addDecimal, parseDecimal, invertDecimal } from '../util';
 class Expenses extends React.Component {
 
   _renderChart(transactions) {
+    if (!transactions || transactions.length === 0) return;
+
     // FIXME: rename this chart MultiSeriesOverTime (or something) and make
     // these three things props
     const accountRE = /^Expenses/;

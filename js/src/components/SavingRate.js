@@ -8,6 +8,8 @@ import { addDecimal, parseDecimal, invertDecimal } from '../util';
 class SavingRate extends React.Component {
 
   _renderChart(transactions) {
+    if (!transactions || transactions.length === 0) return;
+
     // FIXME: write function to normalize time ranges rather than hard coding
     // that R.drop(4). . . be sure to normalize *after* calculating running totals
     const incomeSeries = R.compose(
