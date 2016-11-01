@@ -48,9 +48,7 @@ class MainTabs extends React.Component {
     this.setState(this.loadFromStorage());
     // FIXME: after load, render methods on all components get called
     // but charts don't get re-loaded. . . wonder if this is a reload
-    // issue with c3. . . when the page gets reloaded, the first chart
-    // does load but stops with:
-    //   Uncaught TypeError: undefined does not have a method named "isZero"
+    // issue with c3.
   }
 
   render() {

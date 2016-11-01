@@ -5,7 +5,7 @@ import { splitN, trace, parseDecimal } from './util';
 // helpers
 const lines = R.split('\n');
 const firstLine = R.compose(R.head, lines);
-const transChunks = R.split(/\n{2,}/);
+const transChunks = R.compose(R.split(/\n{2,}/), R.trim);
 const cpSection = R.compose(R.nth(2), splitN(/\n{2}/, 4));
 const transSection = R.compose(R.nth(4), splitN(/\n{2}/, 4));
 
