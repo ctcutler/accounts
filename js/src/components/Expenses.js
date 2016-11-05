@@ -8,6 +8,10 @@ import {
 import { addDecimal, parseDecimal, invertDecimal } from '../util';
 
 class Expenses extends React.Component {
+  constructor(props) {
+    super(props);
+    this.chart = null;
+  }
 
   _renderChart(transactions) {
     if (!transactions || transactions.length === 0) return;
@@ -65,38 +69,42 @@ class Expenses extends React.Component {
       R.reduce((acc, acct) => R.assoc(acct, 'area', acc), {})
     )(accounts);
     const groups = [R.append(otherLabel, accounts)];
-    c3.generate({
-      bindto: '#expensesChart',
-      data: {
-        x: 'x',
-        columns,
-        types,
-        groups
-      },
-      size: {
-        height: 700
-      },
-      axis: {
-        x: {
-          type: 'timeseries',
+    const data = { x: 'x', columns, types, groups };
+    if (this.chart === null) {
+      c3.generate({
+        bindto: '#expensesChart',
+        data,
+        size: {
+          height: 700
+        },
+        axis: {
+          x: {
+            type: 'timeseries',
+          }
+        },
+        tooltip: {
+          format: {
+            // from: http://stackoverflow.com/questions/149055/how-can-i-format-numbers-as-money-in-javascript
+            value: (value, ratio, id, index) =>
+              id === 'savingRate'
+                ? ((value / columns[1][index+1]) * 100).toFixed(2).toString() + '%'
+                : value.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')
+          }
+        },
+        point: {
+          show: false
         }
-      },
-      tooltip: {
-        format: {
-          // from: http://stackoverflow.com/questions/149055/how-can-i-format-numbers-as-money-in-javascript
-          value: (value, ratio, id, index) =>
-            id === 'savingRate'
-              ? ((value / columns[1][index+1]) * 100).toFixed(2).toString() + '%'
-              : value.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')
-        }
-      },
-      point: {
-        show: false
-      }
-    });
+      });
+    } else {
+      this.chart.load(data);
+    }
   }
 
   componentDidMount() {
+    this._renderChart(this.props.transactions);
+  }
+
+  componentDidUpdate() {
     this._renderChart(this.props.transactions);
   }
 

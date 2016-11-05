@@ -6,6 +6,10 @@ import { overMonths, runningTotal, fillInMonths } from '../analyze';
 import { addDecimal, parseDecimal } from '../util';
 
 class NetWorth extends React.Component {
+  constructor(props) {
+    super(props);
+    this.chart = null;
+  }
 
   _renderChart(transactions) {
     if (!transactions || transactions.length === 0) return;
@@ -33,44 +37,53 @@ class NetWorth extends React.Component {
         R.prepend('Liabilities', R.pluck(1, liabilitySeries)),
         R.prepend('netWorth', calcDelta(assetSeries, liabilitySeries))
     ];
-    c3.generate({
-      bindto: '#netWorthChart',
-      data: {
-        x: 'x',
-        columns,
-        types: {
-          Assets: 'area',
-          Liabilities: 'area',
-          netWorth: 'line'
-        },
-        colors: {
-          Assets: '#079400',
-          Liabilities: '#DD0000',
-          netWorth: '#000000',
-        }
+    const data = {
+      x: 'x',
+      columns,
+      types: {
+        Assets: 'area',
+        Liabilities: 'area',
+        netWorth: 'line'
       },
-      size: {
-        height: 700
-      },
-      axis: {
-        x: {
-          type: 'timeseries',
-        }
-      },
-      tooltip: {
-        format: {
-          // from: http://stackoverflow.com/questions/149055/how-can-i-format-numbers-as-money-in-javascript
-          value: (value, ratio, id, index) =>
-            value.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')
-        }
-      },
-      point: {
-        show: false
+      colors: {
+        Assets: '#079400',
+        Liabilities: '#DD0000',
+        netWorth: '#000000',
       }
-    });
+    };
+    if (this.chart === null) {
+      this.chart = c3.generate({
+        bindto: '#netWorthChart',
+        data,
+        size: {
+          height: 700
+        },
+        axis: {
+          x: {
+            type: 'timeseries',
+          }
+        },
+        tooltip: {
+          format: {
+            // from: http://stackoverflow.com/questions/149055/how-can-i-format-numbers-as-money-in-javascript
+            value: (value, ratio, id, index) =>
+              value.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')
+          }
+        },
+        point: {
+          show: false
+        }
+      });
+    } else {
+      this.chart.load(data);
+    }
   }
 
   componentDidMount() {
+    this._renderChart(this.props.transactions);
+  }
+
+  componentDidUpdate() {
     this._renderChart(this.props.transactions);
   }
 

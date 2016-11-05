@@ -6,6 +6,10 @@ import { overMonths, runningTotal, fillInMonths } from '../analyze';
 import { addDecimal, parseDecimal, invertDecimal } from '../util';
 
 class SavingRate extends React.Component {
+  constructor(props) {
+    super(props);
+    this.chart = null;
+  }
 
   _renderChart(transactions) {
     if (!transactions || transactions.length === 0) return;
@@ -55,48 +59,58 @@ class SavingRate extends React.Component {
         R.prepend('savingRate', savingRateSeries),
         R.prepend('trend', trendSeries)
     ];
-    c3.generate({
-      bindto: '#savingRateChart',
-      data: {
-        x: 'x',
-        columns,
-        types: {
-          Income: 'area',
-          Expenses: 'area',
-          savingRate: 'line',
-          trend: 'line'
-        },
-        colors: {
-          Income: '#079400',
-          Expenses: '#DD0000',
-          savingRate: '#000000',
-          trend: '#0000FF',
-        }
+    const data = {
+      x: 'x',
+      columns,
+      types: {
+        Income: 'area',
+        Expenses: 'area',
+        savingRate: 'line',
+        trend: 'line'
       },
-      size: {
-        height: 700
-      },
-      axis: {
-        x: {
-          type: 'timeseries',
-        }
-      },
-      tooltip: {
-        format: {
-          // from: http://stackoverflow.com/questions/149055/how-can-i-format-numbers-as-money-in-javascript
-          value: (value, ratio, id, index) =>
-            id === 'savingRate'
-              ? ((value / columns[1][index+1]) * 100).toFixed(2).toString() + '%'
-              : value.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')
-        }
-      },
-      point: {
-        show: false
+      colors: {
+        Income: '#079400',
+        Expenses: '#DD0000',
+        savingRate: '#000000',
+        trend: '#0000FF',
       }
-    });
+    };
+
+    if (this.chart === null) {
+      c3.generate({
+        bindto: '#savingRateChart',
+        data,
+        size: {
+          height: 700
+        },
+        axis: {
+          x: {
+            type: 'timeseries',
+          }
+        },
+        tooltip: {
+          format: {
+            // from: http://stackoverflow.com/questions/149055/how-can-i-format-numbers-as-money-in-javascript
+            value: (value, ratio, id, index) =>
+              id === 'savingRate'
+                ? ((value / columns[1][index+1]) * 100).toFixed(2).toString() + '%'
+                : value.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')
+          }
+        },
+        point: {
+          show: false
+        }
+      });
+    } else {
+      this.chart.load(data);
+    }
   }
 
   componentDidMount() {
+    this._renderChart(this.props.transactions);
+  }
+
+  componentDidUpdate() {
     this._renderChart(this.props.transactions);
   }
 
