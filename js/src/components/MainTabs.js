@@ -11,7 +11,6 @@ import Income from './Income';
 import NetWorth from './NetWorth';
 import SavingRate from './SavingRate';
 
-import { data } from '../data';
 import { balanceTransactions, convertTransactions } from '../analyze';
 import { ledger } from '../parse';
 import { trace } from '../util';
