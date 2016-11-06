@@ -5,7 +5,7 @@ import re
 from import_model import Journal, Transaction, Posting, AccountRegEx
 from input_parsers import (NecuParser, NecuSilverLiningParser, UsBankParser,
     AllyParser, WellsFargoParser, BpasParser, TiaaCrefParser, AmmVanguardParser,
-    CtcVanguardParser, FidelityParser)
+    CtcVanguardParser, FidelityParser, CtcIraVanguardParser)
 
 # For tab completion in MacOS X, from:
 # https://pewpewthespells.com/blog/osx_readline.html
@@ -121,6 +121,7 @@ def main():
         'usbank': UsBankParser,
         'vanguard-amm': AmmVanguardParser,
         'vanguard-ctc': CtcVanguardParser,
+        'vanguard-ctc-ira': CtcIraVanguardParser,
         'wellsfargo': WellsFargoParser,
         'fidelity': FidelityParser,
     }
