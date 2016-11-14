@@ -2,7 +2,7 @@ Error.stackTraceLimit = Infinity;
 const R = require('ramda');
 const moment = require('moment');
 import { trace, safeObjOf, safeAssoc, multDecimal, addDecimal, invertDecimal,
-  decimalIsZero, parseDecimal, mapAssoc, equalDates } from './util';
+  decimalIsZero, parseDecimal, mapAssoc, equalDates, logError } from './util';
 
 export const mergeAmounts = R.mergeWith(addDecimal);
 export const unitQuantity = R.path(['unitPrice', 'quantity']);
@@ -76,7 +76,7 @@ export const balanceTransactions = R.map(balanceTransaction);
 const calculateConversion = R.ifElse(
   (prices, amount) => R.has(amount.commodity, prices),
   (prices, amount) => multDecimal(prices[amount.commodity].price, amount.quantity),
-  (prices, amount) => undefined
+  (prices, amount) => logError('price not found for: '+amount.commodity, undefined)
 );
 const sameCommodity = comm => R.compose(R.equals(comm), R.prop('commodity'));
 const newAmount = (commodity, prices) => R.applySpec({

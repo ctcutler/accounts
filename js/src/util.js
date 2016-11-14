@@ -9,6 +9,10 @@ export const trace = R.curry((tag, x) => {
   );
   return x;
 });
+export const logError = R.curry((log, rv) => {
+  console.log(log);
+  return rv;
+});
 
 // Dates
 export const equalDates = (d1, d2) =>
