@@ -45,9 +45,6 @@ class MainTabs extends React.Component {
     localStorage.setItem('ledgerData', data);
 
     this.setState(this.loadFromStorage());
-    // FIXME: after load, render methods on all components get called
-    // but charts don't get re-loaded. . . wonder if this is a reload
-    // issue with c3.
   }
 
   render() {

@@ -29,25 +29,33 @@ npm install
 gulp test
 ```
 
-
-Reports
- - Total Net Worth Over Time
-   - Broken Down By Assets and Liabilities
-   - Broken Down By Liquid and Illiquid
- - Income/Expenses
-   - Broken Down By Account Over a Time Period
-
-Features
- - Filter by time range
- - Filter by account pattern
- - Drill in from chart to transactions
- - Time range selector
- - Accounts that have changed significantly in a time period
-
-To Dos
- - Track mortgage and car loan as liabilities rather than expenses
- - Identify use cases, design reports around them
- - consider using classes for transactions, postings, quantities, etc.
- - reorganize source directory, to better distinguish between UI and model
- - figure out null/undefined handling
- - move commodity coversion to parsing step
+Backlog
+- Prioritize backlog
+- Fix monthly chart axes and tooltips to show month and year not month and day
+- Figure out why the net worth chart has no liabilities at all in first 5 months
+- Add time range control to over time charts
+- Adjust time granularity based on time range
+- Remove Demo Section
+- Clicking on point in net worth chart displays broken down assets and liabilities on that date
+- Net worth chart has checkbox that toggles liquid/illiquid asset distinction
+- Filter all charts by account regex
+- Show all transactions represented by chart (respect time range and account name filters)
+- Performance analysis (loading/parsing and initial display especially)
+- play with granularity of savings rate chart to see whether zooming in to days, out to quarters,
+  or doing some kind of smoothing/averaging would make it less spiky and more useful
+- consider not showing incomplete time chunks (months/quarters/years) so that charts don't drop
+  to near zero at start and end
+- use create-react-app to standardize react stuff/tooling
+- refactor Expenses/Income charts into instances of a general "multi series over time" chart
+  and move the data analysis code to the analysis file. (see FIXMEs)
+- write function to normalize time range better rather than hardcoding an R.drop in Net Worth
+  and Saving Rate charts (and check if this happens elsewhere) (see FIXMEs)
+- move code from saving rate chart to analysis file (see FIXME)
+- Use folktale's Maybe or Either to improve null handling
+- brainstorm clearer ways to do text parsing functionally. . . composition of functions that
+  mimics structure of data
+- move commodity conversion to parsing step
+- Fix sorting of items in tooltip to always match stacking in chart
+- Make number of layers shown on income and expenses charts adjustable
+- On click, show all income/expenses for selected time point in income/expense charts
+- add loading indicator to data file load
