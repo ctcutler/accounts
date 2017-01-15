@@ -30,24 +30,23 @@ gulp test
 ```
 
 Backlog
-- Prioritize backlog
-- Fix monthly chart axes and tooltips to show month and year not month and day
-- Figure out why the net worth chart has no liabilities at all in first 5 months
-- Add time range control to over time charts
-- Adjust time granularity based on time range
-- Remove Demo Section
-- Clicking on point in net worth chart displays broken down assets and liabilities on that date
-- Net worth chart has checkbox that toggles liquid/illiquid asset distinction
-- Filter all charts by account regex
-- Show all transactions represented by chart (respect time range and account name filters)
-- Performance analysis (loading/parsing and initial display especially)
-- play with granularity of savings rate chart to see whether zooming in to days, out to quarters,
-  or doing some kind of smoothing/averaging would make it less spiky and more useful
-- consider not showing incomplete time chunks (months/quarters/years) so that charts don't drop
-  to near zero at start and end
 - use create-react-app to standardize react stuff/tooling
 - refactor Expenses/Income charts into instances of a general "multi series over time" chart
   and move the data analysis code to the analysis file. (see FIXMEs)
+- Filter all charts by account regex
+- Adjust time granularity based on time range
+- Add time range control to over time charts
+- Clicking on point in net worth chart displays broken down assets and liabilities on that date
+- On click, show all income/expenses for selected time point in income/expense charts
+- Show all transactions represented by chart (respect time range and account name filters)
+- Remove Demo Section
+- Net worth chart has checkbox that toggles liquid/illiquid asset distinction
+- Performance analysis (loading/parsing and initial display especially)
+- play with granularity of savings rate chart to see whether zooming in to days, out to quarters,
+  or doing some kind of smoothing/averaging would make it less spiky and more useful
+- Fix monthly chart axes and tooltips to show month and year not month and day
+- consider not showing incomplete time chunks (months/quarters/years) so that charts don't drop
+  to near zero at start and end
 - write function to normalize time range better rather than hardcoding an R.drop in Net Worth
   and Saving Rate charts (and check if this happens elsewhere) (see FIXMEs)
 - move code from saving rate chart to analysis file (see FIXME)
@@ -57,5 +56,5 @@ Backlog
 - move commodity conversion to parsing step
 - Fix sorting of items in tooltip to always match stacking in chart
 - Make number of layers shown on income and expenses charts adjustable
-- On click, show all income/expenses for selected time point in income/expense charts
 - add loading indicator to data file load
+- Figure out why the net worth chart has no liabilities at all in first 5 months
