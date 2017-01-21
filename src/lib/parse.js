@@ -1,6 +1,6 @@
 Error.stackTraceLimit = Infinity;
 const R = require('ramda');
-import { splitN, trace, parseDecimal } from './util';
+import { splitN, parseDecimal } from './util';
 
 // helpers
 const lines = R.split('\n');

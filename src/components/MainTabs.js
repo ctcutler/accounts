@@ -11,9 +11,8 @@ import Income from './Income';
 import NetWorth from './NetWorth';
 import SavingRate from './SavingRate';
 
-import { balanceTransactions, convertTransactions } from '../analyze';
-import { ledger } from '../parse';
-import { trace } from '../util';
+import { balanceTransactions, convertTransactions } from '../lib/analyze';
+import { ledger } from '../lib/parse';
 
 class MainTabs extends React.Component {
   constructor(props) {

@@ -1,7 +1,7 @@
 import {
   splitN, flattenToPaths, parseDecimal, multDecimal, decimalIsZero,
   mapAssoc, equalDates
-} from '../src/util';
+} from './util';
 
 describe('flattenToPaths', function () {
   const input = {a: {b1: {c1: 42, c2: 43}}, x: {y: {z: 107}}, emp: {ty: {}}},

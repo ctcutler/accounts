@@ -1,9 +1,8 @@
 import React from 'react';
-const d3 = require('d3');
 const c3 = require('c3');
 const R = require('ramda');
-import { overMonths, runningTotal, fillInMonths } from '../analyze';
-import { addDecimal, parseDecimal, invertDecimal } from '../util';
+import { overMonths, fillInMonths } from '../lib/analyze';
+import { addDecimal, invertDecimal } from '../lib/util';
 
 class SavingRate extends React.Component {
   constructor(props) {

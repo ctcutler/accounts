@@ -1,6 +1,6 @@
 const R = require('ramda');
-import { postings, transaction, ledger, commodityPrices } from '../src/parse';
-import { parseDecimal } from '../src/util';
+import { postings, transaction, ledger, commodityPrices } from './parse';
+import { parseDecimal } from './util';
 const transactionInput = `2014/02/14 foo bar
   Assets:Some Account:Sub-Account    $288.10558392
   Assets:Some Account:Other Sub-Account   123.45 ABCD

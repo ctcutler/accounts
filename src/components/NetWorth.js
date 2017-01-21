@@ -1,9 +1,8 @@
 import React from 'react';
-const d3 = require('d3');
 const c3 = require('c3');
 const R = require('ramda');
-import { overMonths, runningTotal, fillInMonths } from '../analyze';
-import { addDecimal, parseDecimal } from '../util';
+import { overMonths, runningTotal, fillInMonths } from '../lib/analyze';
+import { addDecimal } from '../lib/util';
 
 class NetWorth extends React.Component {
   constructor(props) {

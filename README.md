@@ -30,7 +30,6 @@ gulp test
 ```
 
 Backlog
-- use create-react-app to standardize react stuff/tooling
 - refactor Expenses/Income charts into instances of a general "multi series over time" chart
   and move the data analysis code to the analysis file. (see FIXMEs)
 - Filter all charts by account regex

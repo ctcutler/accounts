@@ -1,6 +1,6 @@
 import React from 'react';
 const R = require('ramda');
-import { filterNoOp, identifyTransactions, filterAccount } from '../analyze';
+import { filterNoOp, identifyTransactions, filterAccount } from '../lib/analyze';
 
 class ATransactionList extends React.Component {
   render() {

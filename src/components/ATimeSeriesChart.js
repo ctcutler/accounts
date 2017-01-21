@@ -1,8 +1,7 @@
 import React from 'react';
-const d3 = require('d3');
 const c3 = require('c3');
 const R = require('ramda');
-import {overMonths, runningTotal} from '../analyze';
+import {overMonths, runningTotal} from '../lib/analyze';
 
 class ATimeSeriesChart extends React.Component {
 

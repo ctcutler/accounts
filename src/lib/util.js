@@ -14,6 +14,9 @@ export const logError = R.curry((log, rv) => {
   return rv;
 });
 
+// Logic
+export const applyIfTruthy = f => R.ifElse(R.identity, f, R.identity);
+
 // Dates
 export const equalDates = (d1, d2) =>
   d1 && d2
@@ -43,6 +46,7 @@ const lSplit = pat => s => s.substring(0, s.search(pat));
 const rSplit = pat => s => s.substring(matchOffset(s.match(pat)));
 const splitMore = (pat, n, s) => R.test(pat, s) && n > 0;
 const prependLeft = (pat, s) => R.prepend(lSplit(pat)(s));
+// eslint-disable-next-line no-use-before-define
 const recurseRight = (pat, n) => R.compose(splitN(pat, n-1), rSplit(pat));
 const recurse = (pat, n, s) => R.compose(prependLeft(pat, s), recurseRight(pat, n))(s);
 const baseCase = R.compose(Array, R.nthArg(2));
@@ -91,6 +95,3 @@ export const mapAssoc = R.curry(
       ? R.map(el => mapAssoc(p, f, el), d)
       : R.assoc(p[0], mapAssoc(p.slice(1), f, d[p[0]]), d)
 );
-
-// Logic
-export const applyIfTruthy = f => R.ifElse(R.identity, f, R.identity);

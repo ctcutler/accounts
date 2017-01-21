@@ -1,8 +1,7 @@
 import React from 'react';
-const d3 = require('d3');
 const c3 = require('c3');
 const R = require('ramda');
-import { balances } from '../analyze';
+import { balances } from '../lib/analyze';
 
 class APieChart extends React.Component {
 

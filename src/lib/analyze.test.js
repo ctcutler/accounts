@@ -1,12 +1,12 @@
 const R = require('ramda');
-import { parseDecimal } from '../src/util';
+import { parseDecimal } from './util';
 import { balances, mergeAmounts, amount, amounts, filterBefore, filterAfter,
          sumQuantities, balanceAmounts, balancePostings, balanceTransactions,
          convertTransactions, overDays, overWeeks, overMonths, overYears,
          identifyTransactions, runningTotal, filterAccount, filterNoOp,
          fillInDays, fillInWeeks, fillInMonths, fillInYears, minTs, maxTs,
          appendMax, prependMin, normalizeMax
-} from '../src/analyze';
+} from './analyze';
 
 const transactions = [
   {

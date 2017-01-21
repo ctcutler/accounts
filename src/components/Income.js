@@ -1,13 +1,10 @@
 import React from 'react';
-const d3 = require('d3');
 const c3 = require('c3');
 const R = require('ramda');
-import {
-  overMonths, runningTotal, fillInMonths, balances, normalizeMax
-} from '../analyze';
-import { addDecimal, parseDecimal, invertDecimal } from '../util';
+import { overMonths, balances, normalizeMax } from '../lib/analyze';
+import { invertDecimal } from '../lib/util';
 
-class Expenses extends React.Component {
+class Income extends React.Component {
   constructor(props) {
     super(props);
     this.chart = null;
@@ -16,11 +13,7 @@ class Expenses extends React.Component {
   _renderChart(transactions) {
     if (!transactions || transactions.length === 0) return;
 
-    // FIXME: rename this chart MultiSeriesOverTime (or something) and make
-    // these three things props
-    const accountRE = /^Expenses/;
-    const limit = 10;
-    const invert = false;
+    const accountRE = /^Income/;
     // FIXME: clean up and abstract all this
     const accounts = R.compose(
       R.pluck(0),
@@ -30,20 +23,12 @@ class Expenses extends React.Component {
       normalizeMax('month'),
       R.map(
         acct => R.map(
-          s => invert ? R.adjust(invertDecimal, 1, s) : s,
+          R.adjust(invertDecimal, 1),
           overMonths(new RegExp(acct))(transactions)
         )
       )
     )(accounts);
     const mapIndexed = R.addIndex(R.map);
-
-    // FIXME is this really what "fold" is?
-    const otherLabel = 'Others';
-    const fold = f => l => R.reduce(f, R.head(l), R.tail(l));
-    const prep = limit => R.compose(R.map(R.tail), R.drop(limit));
-    const combine = limit => R.compose(fold(R.zipWith(R.add)), prep(limit));
-    const others = limit => R.compose(R.prepend(otherLabel), combine(limit));
-
     const columns = R.compose(
       R.prepend(
         R.compose(
@@ -51,11 +36,6 @@ class Expenses extends React.Component {
           R.pluck(0)
         )(series[0])
       ),
-      series => R.append(
-        others(limit)(series),
-        R.take(limit, series)
-      ),
-      R.sort((a, b) => R.sum(R.tail(b)) - R.sum(R.tail(a))),
       mapIndexed(
         (s, idx) => R.compose(
           R.prepend(accounts[idx]),
@@ -64,15 +44,12 @@ class Expenses extends React.Component {
         )(s)
       )
     )(series);
-    const types = R.compose(
-      R.assoc(otherLabel, 'area'),
-      R.reduce((acc, acct) => R.assoc(acct, 'area', acc), {})
-    )(accounts);
-    const groups = [R.append(otherLabel, accounts)];
+    const types = R.reduce((acc, acct) => R.assoc(acct, 'area', acc), {}, accounts);
+    const groups = [accounts];
     const data = { x: 'x', columns, types, groups };
     if (this.chart === null) {
       c3.generate({
-        bindto: '#expensesChart',
+        bindto: '#incomeChart',
         data,
         size: {
           height: 700
@@ -109,8 +86,8 @@ class Expenses extends React.Component {
   }
 
   render() {
-      return <div id="expensesChart"></div>;
+      return <div id="incomeChart"></div>;
   }
 }
 
-export default Expenses;
+export default Income;

@@ -1,7 +1,7 @@
 Error.stackTraceLimit = Infinity;
 const R = require('ramda');
 const moment = require('moment');
-import { trace, safeObjOf, safeAssoc, multDecimal, addDecimal, invertDecimal,
+import { safeObjOf, multDecimal, addDecimal, invertDecimal,
   decimalIsZero, parseDecimal, mapAssoc, equalDates, logError } from './util';
 
 export const mergeAmounts = R.mergeWith(addDecimal);
@@ -61,7 +61,7 @@ export const filterNoOp = R.filter(
   )
 );
 
-export const sumQuantities = R.mergeWithKey((k, l, r) => k == 'quantity' ? addDecimal(l, r) : r);
+export const sumQuantities = R.mergeWithKey((k, l, r) => k === 'quantity' ? addDecimal(l, r) : r);
 const getAmounts = R.compose(R.map(R.prop('amount')), R.init);
 export const balanceAmounts = R.compose(
   amount => R.assoc('quantity', invertDecimal(amount.quantity), amount),
