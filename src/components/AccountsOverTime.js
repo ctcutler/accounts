@@ -2,7 +2,7 @@ import React from 'react';
 const c3 = require('c3');
 const R = require('ramda');
 import { overMonths, balances, normalizeMax } from '../lib/analyze';
-import { invertDecimal, trace } from '../lib/util';
+import { invertDecimal } from '../lib/util';
 
 class AccountsOverTime extends React.Component {
   constructor(props) {
