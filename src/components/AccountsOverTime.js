@@ -2,7 +2,7 @@ import React from 'react';
 const c3 = require('c3');
 const R = require('ramda');
 import { overMonths, balances, normalizeMax } from '../lib/analyze';
-import { invertDecimal } from '../lib/util';
+import { invertDecimal, trace } from '../lib/util';
 
 class AccountsOverTime extends React.Component {
   constructor(props) {
@@ -14,27 +14,30 @@ class AccountsOverTime extends React.Component {
     if (!transactions || transactions.length === 0) return;
 
     // FIXME: clean up and abstract all this
+    const otherLabel = 'Others';
+
+    // gets a list of accounts matching the regular expression from the
+    // list of transactions
     const accounts = R.compose(
       R.pluck(0),
       balances(this.props.accountRE)
     )(transactions);
+
+    // create time series data for the given accounts and transactions
     const series = R.compose(
+      R.map(R.map(s => this.props.invert ? R.adjust(invertDecimal, 1, s) : s)),
       normalizeMax('month'),
-      R.map(
-        acct => R.map(
-          s => this.props.invert ? R.adjust(invertDecimal, 1, s) : s,
-          overMonths(new RegExp(acct))(transactions)
-        )
-      )
+      R.map(acct => overMonths(new RegExp(acct))(transactions))
     )(accounts);
     const mapIndexed = R.addIndex(R.map);
 
-    // FIXME is this really what "fold" is?
-    const otherLabel = 'Others';
     const fold = f => l => R.reduce(f, R.head(l), R.tail(l));
-    const prep = limit => R.compose(R.map(R.tail), R.drop(limit));
-    const combine = limit => R.compose(fold(R.zipWith(R.add)), prep(limit));
-    const others = limit => R.compose(R.prepend(otherLabel), combine(limit));
+    const others = limit => label => R.compose(
+      R.prepend(label),
+      fold(R.zipWith(R.add)),
+      R.map(R.tail),
+      R.drop(limit)
+    );
 
     const columns = R.compose(
       R.prepend(
@@ -44,7 +47,7 @@ class AccountsOverTime extends React.Component {
         )(series[0])
       ),
       series => R.append(
-        others(this.props.limit)(series),
+        others(this.props.limit)(otherLabel)(series),
         R.take(this.props.limit, series)
       ),
       R.sort((a, b) => R.sum(R.tail(b)) - R.sum(R.tail(a))),
