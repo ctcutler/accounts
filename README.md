@@ -30,8 +30,6 @@ gulp test
 ```
 
 Backlog
-- refactor Expenses/Income charts into instances of a general "multi series over time" chart
-  and move the data analysis code to the analysis file. (see FIXMEs)
 - Filter all charts by account regex
 - Adjust time granularity based on time range
 - Add time range control to over time charts

@@ -13,7 +13,6 @@ class AccountsOverTime extends React.Component {
   _renderChart(transactions) {
     if (!transactions || transactions.length === 0) return;
 
-    // FIXME: clean up and abstract all this
     const otherLabel = 'Others';
 
     // gets a list of accounts matching the regular expression from the
