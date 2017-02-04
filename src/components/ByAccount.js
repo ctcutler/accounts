@@ -1,5 +1,6 @@
 import React from 'react';
 import AccountsOverTime from './AccountsOverTime';
+import './ByAccount.css';
 
 const presets = {
   income: {
@@ -39,28 +40,33 @@ class Income extends React.Component {
     this.setState(presets[preset]);
   }
 
-  // FIXME: get some styling in here and get rid of the nonbreaking spaces
-  // and make the links look like links!
-
   render() {
     return (
-      <div>
-        <form>
-          Account Pattern: <input type="text"
-                                  id="regex"
-                                  value={this.state.regex.toString().slice(1, -1)}
-                                  onChange={this.handleChange}/> &nbsp;&nbsp;
-          Limit: <input type="text"
-                        id="limit"
-                        value={this.state.limit}
-                        onChange={this.handleChange}/> &nbsp;&nbsp;
-          Invert: <input type="checkbox"
-                         id="invert"
-                         checked={this.state.invert}
-                         onChange={this.handleChange}/> &nbsp;&nbsp;
-        </form>
+      <div className="outer">
+        <div className="filters">
+          <span className="filter">
+            Account Pattern: <input type="text"
+                                    id="regex"
+                                    value={this.state.regex.toString().slice(1, -1)}
+                                    onChange={this.handleChange}/>
+          </span>
+          <span className="filter">
+            Limit: <input type="text"
+                          id="limit"
+                          value={this.state.limit}
+                          onChange={this.handleChange}/>
+          </span>
+          <span className="filter">
+            Invert: <input type="checkbox"
+                           id="invert"
+                           checked={this.state.invert}
+                           onChange={this.handleChange}/>
+          </span>
+        </div>
         <div>
-            <a onClick={evt => this.applyPreset('income')}>Income</a> &nbsp;&nbsp; <a onClick={evt => this.applyPreset('expenses')}>Expenses</a>
+            Presets:
+            <a className="filterPreset" onClick={evt => this.applyPreset('income')}>Income</a>
+            <a className="filterPreset" onClick={evt => this.applyPreset('expenses')}>Expenses</a>
         </div>
         <AccountsOverTime
           transactions={this.props.transactions}

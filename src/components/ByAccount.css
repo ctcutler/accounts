@@ -1,0 +1,21 @@
+div.outer {
+  /* along with the display: inline-block below, this is a trick for centering
+     (http://stackoverflow.com/questions/283961/centering-a-div-block-without-the-width) */
+  text-align: center;
+}
+
+div.filters {
+  padding: 20px;
+  display: inline-block;
+}
+
+span.filter {
+  margin: 0px 10px 0px 10px;
+}
+
+a.filterPreset {
+  text-decoration: underline;
+  color: blue;
+  cursor: pointer;
+  margin: 0px 0px 0px 10px;
+}
