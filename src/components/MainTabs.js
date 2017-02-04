@@ -6,8 +6,7 @@ import APieChart from './APieChart';
 import ATimeSeriesChart from './ATimeSeriesChart';
 import ATransactionList from './ATransactionList';
 import DataFile from './DataFile';
-import Expenses from './Expenses';
-import Income from './Income';
+import ByAccount from './ByAccount';
 import NetWorth from './NetWorth';
 import SavingRate from './SavingRate';
 
@@ -51,9 +50,8 @@ class MainTabs extends React.Component {
       <Tab label="Net Worth">
         <NetWorth transactions={this.state.transactions}/>
       </Tab>
-      <Tab label="Income & Expenses">
-        <Income transactions={this.state.transactions}/>
-        <Expenses transactions={this.state.transactions}/>
+      <Tab label="By Account">
+        <ByAccount transactions={this.state.transactions}/>
       </Tab>
       <Tab label="Savings Rate">
         <SavingRate transactions={this.state.transactions}/>

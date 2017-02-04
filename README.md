@@ -31,8 +31,8 @@ gulp test
 
 Backlog
 - Filter all charts by account regex
-- Adjust time granularity based on time range
 - Add time range control to over time charts
+- Adjust time granularity based on time range
 - Clicking on point in net worth chart displays broken down assets and liabilities on that date
 - On click, show all income/expenses for selected time point in income/expense charts
 - Show all transactions represented by chart (respect time range and account name filters)
@@ -55,3 +55,4 @@ Backlog
 - Make number of layers shown on income and expenses charts adjustable
 - add loading indicator to data file load
 - Figure out why the net worth chart has no liabilities at all in first 5 months
+- Come up with ways to track progress to 4x by 40, 6x by 50, 8x by 60 goals (that's net worth == N x salary)
