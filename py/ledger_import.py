@@ -4,8 +4,10 @@ import re
 
 from import_model import Journal, Transaction, Posting, AccountRegEx
 from input_parsers import (NecuParser, NecuSilverLiningParser, UsBankParser,
-    AllyParser, WellsFargoParser, BpasParser, TiaaCrefParser, AmmVanguardParser,
-    CtcVanguardParser, FidelityParser, CtcIraVanguardParser)
+    AllyMoneyMarketParser, AllyOnlineSavingsParser, AllyCD1Parser, AllyCD2Parser,
+    AllyCD3Parser, AllyCD4Parser, AllyCD5Parser, WellsFargoParser, BpasParser,
+    TiaaCrefParser, AmmVanguardParser, CtcVanguardParser, FidelityParser,
+    CtcIraVanguardParser)
 
 # For tab completion in MacOS X, from:
 # https://pewpewthespells.com/blog/osx_readline.html
@@ -113,7 +115,13 @@ def main():
     * when loop exists, write new journal file, to output file
     """
     input_parsers = {
-        'ally': AllyParser,
+        'allymoneymarket': AllyMoneyMarketParser,
+        'allysavings': AllyOnlineSavingsParser,
+        'allycd1': AllyCD1Parser,
+        'allycd2': AllyCD2Parser,
+        'allycd3': AllyCD3Parser,
+        'allycd4': AllyCD4Parser,
+        'allycd5': AllyCD5Parser,
         'bpas': BpasParser,
         'necu': NecuParser,
         'necusilver': NecuSilverLiningParser,
