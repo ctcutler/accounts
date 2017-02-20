@@ -7,7 +7,7 @@ from import_model import Posting, Transaction
 
 class Parser(object):
     first_header_fields = {}
-    first_header_regex = '.*'
+    first_header_regex = 'a^' # intentionally never matches
     header_offset = 0
     delimiter = ','
 
@@ -482,6 +482,7 @@ class FidelityParser(Parser):
         'DIVIDEND': 'Income:Dividends',
         'ADMINISTRATIVE FEES': 'Expenses:Retirement Account Fees',
         'RECORDKEEPING FEE': 'Expenses:Retirement Account Fees',
+        'ADVISOR FEE': 'Expenses:Retirement Account Fees',
     }
 
     @classmethod
@@ -498,8 +499,8 @@ class FidelityParser(Parser):
             # useless; ignore
             return []
 
-        total = Decimal(parts[3].strip('"'))
-        quantity = Decimal(parts[4].strip('"'))
+        total = Decimal(parts[3].strip('"').replace(',', ''))
+        quantity = Decimal(parts[4].strip('"').replace(',', ''))
         unit_price = total / quantity
         commodity = funds.get(parts[1])
         if not commodity:
@@ -512,7 +513,7 @@ class FidelityParser(Parser):
         if trans_type in ('CONTRIBUTION', 'DIVIDEND'):
             cash_desc = 'Cash from {}'.format(trans_type)
             trans_desc = 'Buy {} with cash from {}'.format(commodity, trans_type)
-        elif trans_type in ('ADMINISTRATIVE FEES', 'RECORDKEEPING FEE'):
+        elif trans_type in ('ADMINISTRATIVE FEES', 'RECORDKEEPING FEE', 'ADVISOR FEE'):
             cash_desc = 'Pay fees'
             trans_desc = 'Sell {} for fees'.format(commodity)
         else:
