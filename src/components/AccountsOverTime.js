@@ -1,7 +1,7 @@
 import React from 'react';
 const c3 = require('c3');
 const R = require('ramda');
-import { overMonths, balances, normalizeMax } from '../lib/analyze';
+import { normalizeMax, monthlyTimeSeriesByAccount } from '../lib/analyze';
 import { invertDecimal } from '../lib/util';
 
 class AccountsOverTime extends React.Component {
@@ -14,22 +14,19 @@ class AccountsOverTime extends React.Component {
     if (!transactions || transactions.length === 0) return;
 
     const otherLabel = 'Others';
-
-    // gets a list of accounts matching the regular expression from the
-    // list of transactions
-    const accounts = R.compose(
-      R.pluck(0),
-      balances(this.props.accountRE)
+    const {accountRE, invert, chartId, limit} = this.props;
+    const [accounts, newSeries] = R.compose(
+      R.transpose,
+      R.toPairs,
+      monthlyTimeSeriesByAccount(accountRE)
     )(transactions);
 
-    // create time series data for the given accounts and transactions
     const series = R.compose(
-      R.map(R.map(s => this.props.invert ? R.adjust(invertDecimal, 1, s) : s)),
+      R.map(R.map(s => invert ? R.adjust(invertDecimal, 1, s) : s)),
       normalizeMax('month'),
-      R.map(acct => overMonths(new RegExp(acct))(transactions))
-    )(accounts);
-    const mapIndexed = R.addIndex(R.map);
+    )(newSeries);
 
+    const mapIndexed = R.addIndex(R.map);
     const fold = f => l => R.reduce(f, R.head(l), R.tail(l));
     const others = limit => label => R.compose(
       R.prepend(label),
@@ -46,8 +43,8 @@ class AccountsOverTime extends React.Component {
         )(series[0])
       ),
       series => R.append(
-        others(this.props.limit)(otherLabel)(series),
-        R.take(this.props.limit, series)
+        others(limit)(otherLabel)(series),
+        R.take(limit, series)
       ),
       R.sort((a, b) => R.sum(R.tail(b)) - R.sum(R.tail(a))),
       mapIndexed(
@@ -66,7 +63,7 @@ class AccountsOverTime extends React.Component {
     const data = { x: 'x', columns, types, groups };
     if (this.chart === null) {
       c3.generate({
-        bindto: '#'+this.props.chartId,
+        bindto: '#'+chartId,
         data,
         size: {
           height: 700

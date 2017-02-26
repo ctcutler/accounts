@@ -18,7 +18,7 @@ export const amount = R.compose(
   R.prop('amount')
 );
 export const reducePosting = (acc, p) => R.mergeWith(
-  mergeAmounts, R.objOf(p['account'], amount(p)), acc
+  mergeAmounts, {[p['account']]: amount(p)}, acc
 );
 const reduceTrans = (acc, v) => R.compose(
   R.mergeWith(mergeAmounts, acc),
@@ -105,10 +105,13 @@ const datedPostings = (floorDate, accountRE) => R.compose(
   )
 );
 
-const overTime = floorDate => accountRE => R.compose(
+const dateSeries = R.compose(
   R.sortBy(R.nth(0)),
   R.map(R.adjust(R.constructN(1, Date), 0)),
-  R.toPairs,
+  R.toPairs
+);
+const overTime = floorDate => accountRE => R.compose(
+  dateSeries,
   R.reduce(R.mergeWith(addDecimal), {}),
   datedPostings(floorDate, accountRE)
 );
@@ -119,6 +122,25 @@ export const overDays = overTime(startOf('day'));
 export const overWeeks = overTime(startOf('week'));
 export const overMonths = overTime(startOf('month'));
 export const overYears = overTime(startOf('year'));
+
+const timeSeriesByAccount = floorDate => accountRE => R.compose(
+  R.map(dateSeries),                                  // create series
+  R.reduce(R.mergeWith(R.mergeWith(addDecimal)), {}), // merge to one object
+  R.map(x => R.assocPath([x[0], x[1]], x[2], {})),    // convert to objects
+  R.map(x => R.update(1, floorDate(x[1]), x)),        // floor dates
+  R.filter(R.compose(R.test(accountRE), R.head)),     // filter on accounts
+  R.unnest,
+  R.map(                                              // convert to:
+    trans => R.map(                                   // (account, date, quantity)
+      posting => [posting.account, trans.date, posting.amount.quantity],
+      trans.postings
+    )
+  )
+);
+export const dailyTimeSeriesByAccount = timeSeriesByAccount(startOf('day'));
+export const weeklyTimeSeriesByAccount = timeSeriesByAccount(startOf('week'));
+export const monthlyTimeSeriesByAccount = timeSeriesByAccount(startOf('month'));
+export const yearlyTimeSeriesByAccount = timeSeriesByAccount(startOf('year'));
 
 const addOne = (unit, d) => moment(d).add(1, unit).toDate();
 const shouldAddBefore = (unit, acc, v) =>
