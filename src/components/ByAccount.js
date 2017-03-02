@@ -20,6 +20,7 @@ class Income extends React.Component {
     super(props);
 
     this.state = presets['income'];
+    this.handleChange = this.handleChange.bind(this);
   }
 
   handleChange(event) {
