@@ -121,6 +121,7 @@ const startOf = unit => d => moment(d).startOf(unit).toDate();
 export const overDays = overTime(startOf('day'));
 export const overWeeks = overTime(startOf('week'));
 export const overMonths = overTime(startOf('month'));
+export const overQuarters = overTime(startOf('quarter'));
 export const overYears = overTime(startOf('year'));
 
 const timeSeriesByAccount = floorDate => accountRE => R.compose(
@@ -140,6 +141,7 @@ const timeSeriesByAccount = floorDate => accountRE => R.compose(
 export const dailyTimeSeriesByAccount = timeSeriesByAccount(startOf('day'));
 export const weeklyTimeSeriesByAccount = timeSeriesByAccount(startOf('week'));
 export const monthlyTimeSeriesByAccount = timeSeriesByAccount(startOf('month'));
+export const quarterlyTimeSeriesByAccount = timeSeriesByAccount(startOf('quarter'));
 export const yearlyTimeSeriesByAccount = timeSeriesByAccount(startOf('year'));
 
 const addOne = (unit, d) => moment(d).add(1, unit).toDate();
@@ -156,6 +158,7 @@ const fillIn = unit => R.reduce(addBefore(unit), []);
 export const fillInDays = fillIn('day');
 export const fillInWeeks = fillIn('week');
 export const fillInMonths = fillIn('month');
+export const fillInQuarters = fillIn('quarter');
 export const fillInYears = fillIn('year');
 
 export const minTs = R.compose(
