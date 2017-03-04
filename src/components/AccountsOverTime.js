@@ -1,7 +1,9 @@
 import React from 'react';
 const c3 = require('c3');
 const R = require('ramda');
-import { normalizeMax, monthlyTimeSeriesByAccount } from '../lib/analyze';
+import { normalizeMax, monthlyTimeSeriesByAccount,
+  weeklyTimeSeriesByAccount, dailyTimeSeriesByAccount,
+  quarterlyTimeSeriesByAccount, yearlyTimeSeriesByAccount } from '../lib/analyze';
 import { invertDecimal } from '../lib/util';
 
 class AccountsOverTime extends React.Component {
@@ -13,17 +15,25 @@ class AccountsOverTime extends React.Component {
   _renderChart(transactions) {
     if (!transactions || transactions.length === 0) return;
 
+    const byAccountFunctions = {
+      day: dailyTimeSeriesByAccount,
+      week: weeklyTimeSeriesByAccount,
+      month: monthlyTimeSeriesByAccount,
+      quarter: quarterlyTimeSeriesByAccount,
+      year: yearlyTimeSeriesByAccount,
+    };
     const otherLabel = 'Others';
-    const {accountRE, invert, chartId, limit} = this.props;
+    const {accountRE, invert, chartId, limit, granularity} = this.props;
+    const byAccount = byAccountFunctions[granularity];
     const [accounts, newSeries] = R.compose(
       R.transpose,
       R.toPairs,
-      monthlyTimeSeriesByAccount(accountRE)
+      byAccount(accountRE)
     )(transactions);
 
     const series = R.compose(
       R.map(R.map(s => invert ? R.adjust(invertDecimal, 1, s) : s)),
-      normalizeMax('month'),
+      normalizeMax(granularity),
     )(newSeries);
 
     const mapIndexed = R.addIndex(R.map);

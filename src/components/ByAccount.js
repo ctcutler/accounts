@@ -6,11 +6,13 @@ const presets = {
   income: {
     regex: /^Income/,
     limit: 10,
+    granularity: 'month',
     invert: true
   },
   expenses: {
     regex: /^Expenses/,
     limit: 10,
+    granularity: 'month',
     invert: false
   }
 };
@@ -58,6 +60,17 @@ class Income extends React.Component {
                           onChange={this.handleChange}/>
           </span>
           <span className="filter">
+            Granularity: <select value={this.state.granularity}
+                                 id="granularity"
+                                 onChange={this.handleChange}>
+                           <option value="day">Daily</option>
+                           <option value="week">Weekly</option>
+                           <option value="month">Monthly</option>
+                           <option value="quarter">Quarterly</option>
+                           <option value="year">Yearly</option>
+                         </select>
+          </span>
+          <span className="filter">
             Invert: <input type="checkbox"
                            id="invert"
                            checked={this.state.invert}
@@ -74,6 +87,7 @@ class Income extends React.Component {
           chartId="accountsChart"
           accountRE={this.state.regex}
           limit={this.state.limit}
+          granularity={this.state.granularity}
           invert={this.state.invert}/>
       </div>
     );
