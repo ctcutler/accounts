@@ -2,9 +2,6 @@ import React from 'react';
 import {Tabs, Tab} from 'material-ui/Tabs';
 const R = require('ramda');
 
-import APieChart from './APieChart';
-import ATimeSeriesChart from './ATimeSeriesChart';
-import ATransactionList from './ATransactionList';
 import DataFile from './DataFile';
 import ByAccount from './ByAccount';
 import NetWorth from './NetWorth';
@@ -60,12 +57,6 @@ class MainTabs extends React.Component {
         <DataFile onFileLoad={this.handleFileLoad}
           fileDate={this.state.fileDate}
           fileName={this.state.fileName}/>
-      </Tab>
-      <Tab label="Demo">
-        <p>Demo!</p>
-        <APieChart transactions={this.state.transactions}/>
-        <ATimeSeriesChart transactions={this.state.transactions}/>
-        <ATransactionList transactions={this.state.transactions}/>
       </Tab>
     </Tabs>;
   }

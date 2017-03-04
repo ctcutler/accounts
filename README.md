@@ -30,13 +30,9 @@ gulp test
 ```
 
 Backlog
-- Omit last data point because it is likely incomplete
-- Clicking on point in chart shows breakdown for that point (or should I just get tooltip sorting working right?)
-- Remove Demo Section
-- play with granularity of savings rate chart to see whether zooming in to days, out to quarters,
-  or doing some kind of smoothing/averaging would make it less spiky and more useful
-- Come up with ways to track progress to 4x by 40, 6x by 50, 8x by 60 goals (that's net worth == N x salary)
 - Figure out why the net worth chart has no liabilities at all in first 5 months
+- Clicking on point in chart shows breakdown for that point (or should I just get tooltip sorting working right?)
+- Come up with ways to track progress to 4x by 40, 6x by 50, 8x by 60 goals (that's net worth == N x salary)
 - Performance analysis (loading/parsing and initial display especially)
 - Review how challenging it would be to import financial data from previous app
 - Show all transactions represented by chart (respect time range and account name filters)

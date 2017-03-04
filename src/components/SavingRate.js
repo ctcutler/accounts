@@ -1,7 +1,7 @@
 import React from 'react';
 const c3 = require('c3');
 const R = require('ramda');
-import { overMonths, fillInMonths } from '../lib/analyze';
+import { overQuarters, fillInQuarters } from '../lib/analyze';
 import { addDecimal, invertDecimal } from '../lib/util';
 
 class SavingRate extends React.Component {
@@ -13,20 +13,23 @@ class SavingRate extends React.Component {
   _renderChart(transactions) {
     if (!transactions || transactions.length === 0) return;
 
+    const percentString = v => (v * 100).toFixed(2).toString() + '%';
+    // from: http://stackoverflow.com/questions/149055/how-can-i-format-numbers-as-money-in-javascript
+    const addCommas = v => v.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
     // FIXME: write function to normalize time ranges rather than hard coding
     // that R.drop(4). . . be sure to normalize *after* calculating running totals
     const incomeSeries = R.compose(
       R.dropLast(1), // because last will be incomplete
-      R.drop(4),
-      fillInMonths,
+      R.drop(1),
+      fillInQuarters,
       R.map(R.adjust(invertDecimal, 1)),
-      overMonths(/^Income/)
+      overQuarters(/^Income/)
     )(transactions);
     const expensesSeries = R.compose(
       R.dropLast(1), // because last will be incomplete
-      fillInMonths,
+      fillInQuarters,
       R.map(R.adjust(invertDecimal, 1)),
-      overMonths(/^Expenses/)
+      overQuarters(/^Expenses/)
     )(transactions);
 
     const savingRateSeries = R.zipWith(
@@ -91,11 +94,10 @@ class SavingRate extends React.Component {
         },
         tooltip: {
           format: {
-            // from: http://stackoverflow.com/questions/149055/how-can-i-format-numbers-as-money-in-javascript
             value: (value, ratio, id, index) =>
-              id === 'savingRate'
-                ? ((value / columns[1][index+1]) * 100).toFixed(2).toString() + '%'
-                : value.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')
+              id === 'savingRate' || id === 'trend'
+                ? addCommas(value) + ' (' + percentString(value / columns[1][index+1]) + ')'
+                : addCommas(value)
           }
         },
         point: {
