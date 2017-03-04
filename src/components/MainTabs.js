@@ -53,7 +53,7 @@ class MainTabs extends React.Component {
       <Tab label="By Account">
         <ByAccount transactions={this.state.transactions}/>
       </Tab>
-      <Tab label="Savings Rate">
+      <Tab label="Saving Rate">
         <SavingRate transactions={this.state.transactions}/>
       </Tab>
       <Tab label="Data File">

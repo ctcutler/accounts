@@ -30,20 +30,18 @@ gulp test
 ```
 
 Backlog
-- Filter all charts by account regex
-- Add time range control to over time charts
-- Adjust time granularity based on time range
-- Clicking on point in net worth chart displays broken down assets and liabilities on that date
-- On click, show all income/expenses for selected time point in income/expense charts
-- Show all transactions represented by chart (respect time range and account name filters)
+- Omit last data point because it is likely incomplete
+- Clicking on point in chart shows breakdown for that point (or should I just get tooltip sorting working right?)
 - Remove Demo Section
-- Net worth chart has checkbox that toggles liquid/illiquid asset distinction
-- Performance analysis (loading/parsing and initial display especially)
 - play with granularity of savings rate chart to see whether zooming in to days, out to quarters,
   or doing some kind of smoothing/averaging would make it less spiky and more useful
+- Come up with ways to track progress to 4x by 40, 6x by 50, 8x by 60 goals (that's net worth == N x salary)
+- Figure out why the net worth chart has no liabilities at all in first 5 months
+- Performance analysis (loading/parsing and initial display especially)
+- Review how challenging it would be to import financial data from previous app
+- Show all transactions represented by chart (respect time range and account name filters)
+- Net worth chart has checkbox that toggles liquid/illiquid asset distinction
 - Fix monthly chart axes and tooltips to show month and year not month and day
-- consider not showing incomplete time chunks (months/quarters/years) so that charts don't drop
-  to near zero at start and end
 - write function to normalize time range better rather than hardcoding an R.drop in Net Worth
   and Saving Rate charts (and check if this happens elsewhere) (see FIXMEs)
 - move code from saving rate chart to analysis file (see FIXME)
@@ -51,8 +49,4 @@ Backlog
 - brainstorm clearer ways to do text parsing functionally. . . composition of functions that
   mimics structure of data
 - move commodity conversion to parsing step
-- Fix sorting of items in tooltip to always match stacking in chart
-- Make number of layers shown on income and expenses charts adjustable
 - add loading indicator to data file load
-- Figure out why the net worth chart has no liabilities at all in first 5 months
-- Come up with ways to track progress to 4x by 40, 6x by 50, 8x by 60 goals (that's net worth == N x salary)
