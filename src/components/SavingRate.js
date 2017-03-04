@@ -16,12 +16,14 @@ class SavingRate extends React.Component {
     // FIXME: write function to normalize time ranges rather than hard coding
     // that R.drop(4). . . be sure to normalize *after* calculating running totals
     const incomeSeries = R.compose(
+      R.dropLast(1), // because last will be incomplete
       R.drop(4),
       fillInMonths,
       R.map(R.adjust(invertDecimal, 1)),
       overMonths(/^Income/)
     )(transactions);
     const expensesSeries = R.compose(
+      R.dropLast(1), // because last will be incomplete
       fillInMonths,
       R.map(R.adjust(invertDecimal, 1)),
       overMonths(/^Expenses/)

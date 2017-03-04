@@ -24,14 +24,14 @@ class AccountsOverTime extends React.Component {
     };
     const otherLabel = 'Others';
     const {accountRE, invert, chartId, limit, granularity} = this.props;
-    const byAccount = byAccountFunctions[granularity];
     const [accounts, newSeries] = R.compose(
       R.transpose,
       R.toPairs,
-      byAccount(accountRE)
+      byAccountFunctions[granularity](accountRE)
     )(transactions);
 
     const series = R.compose(
+      R.map(R.dropLast(1)),
       R.map(R.map(s => invert ? R.adjust(invertDecimal, 1, s) : s)),
       normalizeMax(granularity),
     )(newSeries);
@@ -93,9 +93,6 @@ class AccountsOverTime extends React.Component {
           }
         },
         grid: {
-            x: {
-                show: true
-            },
             y: {
                 show: true
             }
