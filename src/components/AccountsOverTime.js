@@ -82,6 +82,14 @@ class AccountsOverTime extends React.Component {
                 : value.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')
           }
         },
+        grid: {
+            x: {
+                show: true
+            },
+            y: {
+                show: true
+            }
+        },
         point: {
           show: false
         }
