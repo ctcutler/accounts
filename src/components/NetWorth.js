@@ -16,12 +16,13 @@ class NetWorth extends React.Component {
     // FIXME: write function to normalize time ranges rather than hard coding
     // that R.drop(6). . . be sure to normalize *after* calculating running totals
     const assetSeries = R.compose(
-      R.drop(5),
+      R.drop(10),
       fillInMonths,
       runningTotal,
       overMonths(/^Assets/)
     )(transactions);
     const liabilitySeries = R.compose(
+      R.drop(5),
       fillInMonths,
       runningTotal,
       overMonths(/^Liabilities/)
