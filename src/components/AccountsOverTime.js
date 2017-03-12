@@ -25,7 +25,7 @@ class AccountsOverTime extends React.Component {
     };
     const otherLabel = 'Others';
     const {
-      accountRE, invert, chartId, limit, granularity, cumulative
+      accountRE, invert, chartId, limit, granularity, cumulative, stacked
     } = this.props;
     const [accounts, newSeries] = R.compose(
       R.transpose,
@@ -74,7 +74,10 @@ class AccountsOverTime extends React.Component {
       R.reduce((acc, acct) => R.assoc(acct, 'area', acc), {})
     )(accounts);
     const groups = [R.append(otherLabel, accounts)];
-    const data = { x: 'x', columns, types, groups };
+    const data = { x: 'x', columns, types };
+    if (stacked) {
+      data['groups'] = groups;
+    }
     if (this.chart === null) {
       c3.generate({
         bindto: '#'+chartId,

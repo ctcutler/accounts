@@ -8,6 +8,7 @@ const presets = {
     limit: 10,
     granularity: 'month',
     cumulative: false,
+    stacked: true,
     invert: true
   },
   expenses: {
@@ -15,6 +16,23 @@ const presets = {
     limit: 10,
     granularity: 'month',
     cumulative: false,
+    stacked: true,
+    invert: false
+  },
+  checking: {
+    regex: /Checking/,
+    limit: 10,
+    granularity: 'month',
+    cumulative: true,
+    stacked: false,
+    invert: false
+  },
+  eating: {
+    regex: /Groceries|Restaurants/,
+    limit: 10,
+    granularity: 'month',
+    cumulative: false,
+    stacked: false,
     invert: false
   }
 };
@@ -29,9 +47,10 @@ class Income extends React.Component {
 
   handleChange(event) {
     let val;
+    const checkboxIds = ['cumulative', 'invert', 'stacked'];
     if (event.target.id === 'limit') {
       val = parseInt(event.target.value, 10);
-    } else if (['cumulative', 'invert'].includes(event.target.id)) {
+    } else if (checkboxIds.includes(event.target.id)) {
       val = event.target.checked;
     } else if (event.target.id === 'regex') {
       val = new RegExp(event.target.value);
@@ -84,11 +103,19 @@ class Income extends React.Component {
                            checked={this.state.cumulative}
                            onChange={this.handleChange}/>
           </span>
+          <span className="filter">
+            Stacked: <input type="checkbox"
+                           id="stacked"
+                           checked={this.state.stacked}
+                           onChange={this.handleChange}/>
+          </span>
         </div>
         <div>
             Presets:
             <a className="filterPreset" onClick={evt => this.applyPreset('income')}>Income</a>
             <a className="filterPreset" onClick={evt => this.applyPreset('expenses')}>Expenses</a>
+            <a className="filterPreset" onClick={evt => this.applyPreset('checking')}>Checking</a>
+            <a className="filterPreset" onClick={evt => this.applyPreset('eating')}>Eating</a>
         </div>
         <AccountsOverTime
           transactions={this.props.transactions}
@@ -96,6 +123,7 @@ class Income extends React.Component {
           accountRE={this.state.regex}
           limit={this.state.limit}
           granularity={this.state.granularity}
+          stacked={this.state.stacked}
           cumulative={this.state.cumulative}
           invert={this.state.invert}/>
       </div>

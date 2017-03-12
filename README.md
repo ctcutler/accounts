@@ -30,7 +30,6 @@ gulp test
 ```
 
 Backlog
-- Figure out why the net worth chart has no liabilities at all in first 5 months
 - Clicking on point in chart shows breakdown for that point (or should I just get tooltip sorting working right?)
 - Come up with ways to track progress to 4x by 40, 6x by 50, 8x by 60 goals (that's net worth == N x salary)
 - Performance analysis (loading/parsing and initial display especially)
