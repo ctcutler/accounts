@@ -3,7 +3,8 @@ const c3 = require('c3');
 const R = require('ramda');
 import { normalizeMax, monthlyTimeSeriesByAccount,
   weeklyTimeSeriesByAccount, dailyTimeSeriesByAccount,
-  quarterlyTimeSeriesByAccount, yearlyTimeSeriesByAccount } from '../lib/analyze';
+  quarterlyTimeSeriesByAccount, yearlyTimeSeriesByAccount,
+  runningTotal } from '../lib/analyze';
 import { invertDecimal } from '../lib/util';
 
 class AccountsOverTime extends React.Component {
@@ -23,7 +24,9 @@ class AccountsOverTime extends React.Component {
       year: yearlyTimeSeriesByAccount,
     };
     const otherLabel = 'Others';
-    const {accountRE, invert, chartId, limit, granularity} = this.props;
+    const {
+      accountRE, invert, chartId, limit, granularity, cumulative
+    } = this.props;
     const [accounts, newSeries] = R.compose(
       R.transpose,
       R.toPairs,
@@ -34,6 +37,7 @@ class AccountsOverTime extends React.Component {
       R.map(R.dropLast(1)),
       R.map(R.map(s => invert ? R.adjust(invertDecimal, 1, s) : s)),
       normalizeMax(granularity),
+      R.when(R.always(cumulative), R.map(runningTotal)),
     )(newSeries);
 
     const mapIndexed = R.addIndex(R.map);

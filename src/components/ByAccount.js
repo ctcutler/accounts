@@ -7,12 +7,14 @@ const presets = {
     regex: /^Income/,
     limit: 10,
     granularity: 'month',
+    cumulative: false,
     invert: true
   },
   expenses: {
     regex: /^Expenses/,
     limit: 10,
     granularity: 'month',
+    cumulative: false,
     invert: false
   }
 };
@@ -29,7 +31,7 @@ class Income extends React.Component {
     let val;
     if (event.target.id === 'limit') {
       val = parseInt(event.target.value, 10);
-    } else if (event.target.id === 'invert') {
+    } else if (['cumulative', 'invert'].includes(event.target.id)) {
       val = event.target.checked;
     } else if (event.target.id === 'regex') {
       val = new RegExp(event.target.value);
@@ -76,6 +78,12 @@ class Income extends React.Component {
                            checked={this.state.invert}
                            onChange={this.handleChange}/>
           </span>
+          <span className="filter">
+            Cumulative: <input type="checkbox"
+                           id="cumulative"
+                           checked={this.state.cumulative}
+                           onChange={this.handleChange}/>
+          </span>
         </div>
         <div>
             Presets:
@@ -88,6 +96,7 @@ class Income extends React.Component {
           accountRE={this.state.regex}
           limit={this.state.limit}
           granularity={this.state.granularity}
+          cumulative={this.state.cumulative}
           invert={this.state.invert}/>
       </div>
     );
