@@ -24,6 +24,20 @@ const transactions = [
     ]
   },
   {
+    desc: 'restaurant!',
+    date: new Date('2014/02/14'),
+    postings: [
+      {
+        account: 'Liabilities:Credit Cards:MasterCard',
+        amount: { quantity: parseDecimal(-24.96) , commodity: '$' }
+      },
+      {
+        account: 'Expenses:Restaurants',
+        amount: {}
+      }
+    ]
+  },
+  {
     desc: 'buy stock',
     date: new Date('2014/02/17'),
     postings: [
@@ -47,7 +61,7 @@ const transactions = [
     postings: [
       {
         account: 'Assets:Bank Account:National Savings Bank',
-        amount: { quantity: parseDecimal(-34.52) , commodity: '$' }
+        amount: { quantity: parseDecimal(-59.48) , commodity: '$' }
       },
       {
         account: 'Liabilities:Credit Cards:MasterCard',
@@ -113,18 +127,19 @@ describe('balances', function () {
     balanceTransactions
   )(transactions);
   const re = /(Liabilities|Expenses|Assets)/;
-  const b = balances(re)(txns);
+  const b = balances(1)(re)(txns);
   it('should return the right credit card balance', function () {
     expect(b.length).toEqual(2);
   });
 
-  it('should return the right groceries balance', function () {
-    expect(b[1][1]).toEqual({'$': parseDecimal(34.52)});
+  it('should return the assets balance', function () {
+    expect(b[0][1]).toEqual({'$': parseDecimal(-59.48)});
   });
 
-  it('should return the right bank account balance', function () {
-    expect(b[0][1]).toEqual({'$': parseDecimal(-34.52)});
+  it('should return the expenses balance', function () {
+    expect(b[1][1]).toEqual({'$': parseDecimal(59.48)});
   });
+
 });
 
 describe('filterAccount', function () {
@@ -136,13 +151,13 @@ describe('filterAccount', function () {
 
 describe('filterNoOp', function () {
   it('should filter transactions that actually move money', function () {
-    expect(filterNoOp(transactions).length).toEqual(2);
+    expect(filterNoOp(transactions).length).toEqual(3);
   });
 });
 
 describe('filterBefore', function () {
   it('should filter a transactions list by dates before the given one', function () {
-    expect(filterBefore(new Date('2014/02/18'))(transactions).length).toEqual(2);
+    expect(filterBefore(new Date('2014/02/18'))(transactions).length).toEqual(3);
     expect(filterBefore(new Date('2014/02/14'))(transactions).length).toEqual(0);
   });
 });
@@ -195,12 +210,15 @@ describe('balanceTransactions', function () {
       quantity: parseDecimal(34.52), commodity: '$'
     });
     expect(result[1].postings[1].amount).toEqual({
+      quantity: parseDecimal(24.96), commodity: '$'
+    });
+    expect(result[2].postings[1].amount).toEqual({
       quantity: parseDecimal(22.33),
       commodity: 'CTC',
       unitPrice: { quantity: parseDecimal(23.45), commodity: '$' }
     });
-    expect(result[2].postings[1].amount).toEqual({
-      quantity: parseDecimal(34.52), commodity: '$'
+    expect(result[3].postings[1].amount).toEqual({
+      quantity: parseDecimal(59.48), commodity: '$'
     });
   });
 });

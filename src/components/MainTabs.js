@@ -6,6 +6,7 @@ import DataFile from './DataFile';
 import ByAccount from './ByAccount';
 import NetWorth from './NetWorth';
 import SavingRate from './SavingRate';
+import Explorer from './Explorer';
 
 import { balanceTransactions, convertTransactions } from '../lib/analyze';
 import { ledger } from '../lib/parse';
@@ -52,6 +53,9 @@ class MainTabs extends React.Component {
       </Tab>
       <Tab label="Saving Rate">
         <SavingRate transactions={this.state.transactions}/>
+      </Tab>
+      <Tab label="Explorer">
+        <Explorer transactions={this.state.transactions}/>
       </Tab>
       <Tab label="Data File">
         <DataFile onFileLoad={this.handleFileLoad}

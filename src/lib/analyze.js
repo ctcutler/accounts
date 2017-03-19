@@ -34,9 +34,21 @@ export const removeZeroes = R.filter(
     R.map(R.compose(R.not, decimalIsZero))
   )
 );
+const truncateAcct = depth => R.adjust(
+  R.compose(
+    R.join(":"),
+    R.take(depth),
+    R.split(":"),
+  ),
+  0
+);
 // [transaction] -> [[account, {commodity: quantity}], ...]
-export const balances = acctRE => R.compose(
+export const balances = depth => acctRE => R.compose(
   R.sortBy(R.nth(0)),
+  R.toPairs, // convert back to arrays
+  R.reduce(R.mergeWith(R.mergeWith(addDecimal)), {}),
+  R.map(v => ({[v[0]]: v[1]})), // convert to objs so we can merge
+  R.map(truncateAcct(depth)),
   R.filter(R.compose(R.test(acctRE), R.nth(0))),
   R.toPairs,
   removeZeroes,
