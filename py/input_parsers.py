@@ -483,6 +483,7 @@ class FidelityParser(Parser):
         'ADMINISTRATIVE FEES': 'Expenses:Retirement Account Fees',
         'RECORDKEEPING FEE': 'Expenses:Retirement Account Fees',
         'ADVISOR FEE': 'Expenses:Retirement Account Fees',
+        'Withdrawals': 'Income:Retirement Withdrawals',
     }
 
     @classmethod
@@ -516,6 +517,9 @@ class FidelityParser(Parser):
         elif trans_type in ('ADMINISTRATIVE FEES', 'RECORDKEEPING FEE', 'ADVISOR FEE'):
             cash_desc = 'Pay fees'
             trans_desc = 'Sell {} for fees'.format(commodity)
+        elif trans_type in ('Withdrawals',):
+            cash_desc = 'Withdraw funds'
+            trans_desc = 'Sell {} for withdrawal'.format(commodity)
         else:
             raise Exception('Unknown trans_type: '+trans_type)
 
