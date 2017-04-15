@@ -20,13 +20,14 @@ class SavingRate extends React.Component {
     // that R.drop(4). . . be sure to normalize *after* calculating running totals
     const incomeSeries = R.compose(
       R.dropLast(1), // because last will be incomplete
-      R.drop(1),
+      R.drop(2),
       fillInQuarters,
       R.map(R.adjust(invertDecimal, 1)),
       overQuarters(/^Income/)
     )(transactions);
     const expensesSeries = R.compose(
       R.dropLast(1), // because last will be incomplete
+      R.drop(1),
       fillInQuarters,
       R.map(R.adjust(invertDecimal, 1)),
       overQuarters(/^Expenses/)
