@@ -1,7 +1,7 @@
 import React from 'react';
 const c3 = require('c3');
 const R = require('ramda');
-import { overQuarters, fillInQuarters } from '../lib/analyze';
+import { overMonths, fillInMonths } from '../lib/analyze';
 import { addDecimal, invertDecimal } from '../lib/util';
 
 class SavingRate extends React.Component {
@@ -20,17 +20,16 @@ class SavingRate extends React.Component {
     // that R.drop(4). . . be sure to normalize *after* calculating running totals
     const incomeSeries = R.compose(
       R.dropLast(1), // because last will be incomplete
-      R.drop(2),
-      fillInQuarters,
+      R.drop(4),
+      fillInMonths,
       R.map(R.adjust(invertDecimal, 1)),
-      overQuarters(/^Income/)
+      overMonths(/^Income/)
     )(transactions);
     const expensesSeries = R.compose(
       R.dropLast(1), // because last will be incomplete
-      R.drop(1),
-      fillInQuarters,
+      fillInMonths,
       R.map(R.adjust(invertDecimal, 1)),
-      overQuarters(/^Expenses/)
+      overMonths(/^Expenses/)
     )(transactions);
 
     const savingRateSeries = R.zipWith(
@@ -100,6 +99,11 @@ class SavingRate extends React.Component {
                 ? addCommas(value) + ' (' + percentString(value / columns[1][index+1]) + ')'
                 : addCommas(value)
           }
+        },
+        grid: {
+            y: {
+                show: true
+            }
         },
         point: {
           show: false

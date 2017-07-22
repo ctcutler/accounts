@@ -70,6 +70,11 @@ class NetWorth extends React.Component {
               value.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')
           }
         },
+        grid: {
+            y: {
+                show: true
+            }
+        },
         point: {
           show: false
         }
