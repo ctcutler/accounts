@@ -19,7 +19,8 @@ class SavingRate extends React.Component {
     // FIXME: write function to normalize time ranges rather than hard coding
     // that R.drop(4). . . be sure to normalize *after* calculating running totals
     const yearAverages = R.compose(
-      R.map(R.mean),
+      R.map(R.median),
+      R.map(R.map(x => x.toNumber())),
       R.reduce(R.mergeWith(R.concat), {}),
       R.map(x => R.objOf(x[0].getYear().toString(), [x[1]]))
     );
