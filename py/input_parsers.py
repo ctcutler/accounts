@@ -363,7 +363,6 @@ class VanguardParser(Parser):
         'Buy': None,
     }
 
-
     @classmethod
     def make_transactions(cls, parts):
         # 88037141475,10/31/2014,10/31/2014,Distribution,INCOME DIVIDEND,Total Bond Mkt Index Inv,10.86,1.012,10.99,10.99,
@@ -439,9 +438,8 @@ class CtcIraVanguardParser(Parser):
         # default to money market symbol because it is omitted from data
         commodity = parts[6] if parts[6] else 'VMFXX'
 
-        if trans_type in ('Dividend', 'Reinvestment',
-            'Reinvestment (ST gain)', 'Reinvestment (LT gain)',
-            'Capital gain (LT)', 'Capital gain (ST)'):
+        if trans_type in ('Dividend', 'Capital gain (LT)',
+            'Capital gain (ST)'):
             desc = 'Cash from dividends'
             postings = [
                 Posting(cls.account, total),
@@ -461,7 +459,8 @@ class CtcIraVanguardParser(Parser):
                 Posting(cls.account, total),
                 Posting(cls.account, -quantity, commodity, unit_price)
             ]
-        elif trans_type == 'Buy':
+        elif trans_type in ('Buy', 'Reinvestment',
+            'Reinvestment (ST gain)', 'Reinvestment (LT gain)'):
             desc = 'Buy '+commodity
             postings = [
                 Posting(cls.account, quantity, commodity, unit_price),
