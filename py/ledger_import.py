@@ -7,7 +7,7 @@ from input_parsers import (NecuParser, NecuSilverLiningParser, UsBankParser,
     AllyMoneyMarketParser, AllyOnlineSavingsParser, AllyCD1Parser, AllyCD2Parser,
     AllyCD3Parser, AllyCD4Parser, AllyCD5Parser, WellsFargoParser, BpasParser,
     TiaaCrefParser, AmmVanguardParser, CtcVanguardParser, FidelityParser,
-    CtcIraVanguardParser)
+    CtcIraVanguardParser, KennebunkParser)
 
 # For tab completion in MacOS X, from:
 # https://pewpewthespells.com/blog/osx_readline.html
@@ -132,6 +132,7 @@ def main():
         'vanguard-ctc-ira': CtcIraVanguardParser,
         'wellsfargo': WellsFargoParser,
         'fidelity': FidelityParser,
+        'kennebunk': KennebunkParser,
     }
     arg_parser = ArgumentParser(
         description='Parse financial data and add to a ledger journal.'

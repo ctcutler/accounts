@@ -286,6 +286,9 @@ class TiaaCrefParser(Parser):
     account = 'Assets:TIAA CREF:403(b)'
     first_header_fields = {'Date'}
     other_accounts = {
+        'Dividends': 'Income:Dividends',
+        'Long-term capital gains': 'Income:Long Term Capital Gains',
+        'Short-term capital gains': 'Income:Short Term Capital Gains',
         'Contribution': 'Income:Retirement Contributions',
         'Transfer': account,
         'Plan Servicing Credit': 'Expenses:Retirement Account Fees',
@@ -539,3 +542,22 @@ class FidelityParser(Parser):
                 ]
             )
         ]
+
+class KennebunkParser(Parser):
+    first_header_fields = {'Account'}
+    account = 'Assets:Kennebunk:Checking'
+
+    @classmethod
+    def reorder(cls, items):
+        return reversed(items)
+
+    @classmethod
+    def make_transactions(cls, parts):
+        desc = parts[6].strip('"')
+        date = datetime.strptime(parts[5], '%m/%d/%Y')
+        if parts[2]:
+            quantity = -1 * Decimal(parts[2])
+        else:
+            quantity = Decimal(parts[3])
+        posting = Posting(account=cls.account, quantity=quantity)
+        return [Transaction(date=date, desc=desc, postings=[posting])]
