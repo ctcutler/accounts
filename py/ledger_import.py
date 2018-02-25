@@ -21,6 +21,10 @@ class LedgerImportCmd(Cmd):
     prompt = 'account [/regex/]: '
 
     def get_account(self, trans):
+        # force user to choose account
+        if trans.desc in {'CHECK'}:
+            return ''
+
         possibilities = self.journal.description_map.get(trans.desc, [])
         possibilities.extend(
             regex.account for regex in self.journal.regexes
