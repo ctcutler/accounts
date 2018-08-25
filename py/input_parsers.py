@@ -485,6 +485,7 @@ class FidelityParser(Parser):
         'ADMINISTRATIVE FEES': 'Expenses:Retirement Account Fees',
         'RECORDKEEPING FEE': 'Expenses:Retirement Account Fees',
         'ADVISOR FEE': 'Expenses:Retirement Account Fees',
+        'ADVISOR / CONSULTANT FEE': 'Expenses:Retirement Account Fees',
         'Withdrawals': 'Income:Retirement Withdrawals',
     }
 
@@ -516,7 +517,7 @@ class FidelityParser(Parser):
         if trans_type in ('CONTRIBUTION', 'DIVIDEND'):
             cash_desc = 'Cash from {}'.format(trans_type)
             trans_desc = 'Buy {} with cash from {}'.format(commodity, trans_type)
-        elif trans_type in ('ADMINISTRATIVE FEES', 'RECORDKEEPING FEE', 'ADVISOR FEE'):
+        elif trans_type in ('ADMINISTRATIVE FEES', 'RECORDKEEPING FEE', 'ADVISOR FEE', 'ADVISOR / CONSULTANT FEE'):
             cash_desc = 'Pay fees'
             trans_desc = 'Sell {} for fees'.format(commodity)
         elif trans_type in ('Withdrawals',):
