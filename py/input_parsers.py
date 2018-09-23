@@ -356,7 +356,7 @@ class VanguardParser(Parser):
         'Fund Account Number',
         'Account Number'
     }
-    first_header_regex = '\d{4}-\d{11}'
+    first_header_regex = '^.*\d{8}$'
     other_accounts = {
         'Distribution': 'Income:Dividends',
         'Exchange': None,
