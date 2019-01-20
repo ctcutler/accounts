@@ -7,7 +7,7 @@ from import_model import Posting, Transaction
 
 class Parser(object):
     first_header_fields = {}
-    first_header_regex = 'a^' # intentionally never matches
+    field_counts = None
     header_offset = 0
     delimiter = ','
 
@@ -24,7 +24,7 @@ class Parser(object):
             for parts in cls.reorder(list(reader)[cls.header_offset:]):
                 if parts and\
                    parts[0] not in cls.first_header_fields and\
-                   not re.match(cls.first_header_regex, parts[0]):
+                   (cls.field_counts is None or len(parts) in cls.field_counts):
                     transactions.extend(cls.make_transactions(parts))
             return transactions
 
@@ -119,6 +119,7 @@ funds = {
     'Tot Intl Stock Ix Admiral': 'VTIAX',
     'Extended Mkt Index Adm': 'VEXAX',
     'Target Retirement 2045': 'VTIVX',
+    'VANGUARD TARGET RETIREMENT 2045 INVESTOR CL': 'VTIVX',
 }
 class WellsFargoParser(Parser):
     first_header_fields = {'Date', 'common.account_download_csv.xsl'}
@@ -351,13 +352,17 @@ class TiaaCrefParser(Parser):
 
         return transactions
 
+IGNORE = 'ignore'
 class VanguardParser(Parser):
     first_header_fields = {
         'Fund Account Number',
         'Account Number'
     }
-    first_header_regex = '^.*\d{8}$'
+    field_counts = [11, 15]
     other_accounts = {
+        'Reinvestment': 'Income:Dividends',
+        'Reinvestment (LT gain)': 'Income:Long Term Capital Gains',
+        'Reinvestment (ST gain)': 'Income:Short Term Capital Gains',
         'Distribution': 'Income:Dividends',
         'Exchange': None,
         'Buy': None,
@@ -365,11 +370,24 @@ class VanguardParser(Parser):
 
     @classmethod
     def make_transactions(cls, parts):
-        # 88037141475,10/31/2014,10/31/2014,Distribution,INCOME DIVIDEND,Total Bond Mkt Index Inv,10.86,1.012,10.99,10.99,
+        # As of sometime in 2018, Vanguard *sometimes* now separates the
+        # capital gain and dividend payment transactions from the reinvestment
+        # transactions so we expect two lines like this:
+        #
+        # 62341669,12/28/2018,12/28/2018,Capital gain (LT),Long-Term Capital Gains Distribution,VANGUARD TARGET RETIREMENT 2045 INVESTOR CL,VTIVX,0.0,1.0,0.95,0.0,0.95,0.0,Cash,
+        # 62341669,12/28/2018,12/28/2018,Reinvestment (LT gain),Reinvestment of a Long-Term Capital Gains Distribution,VANGUARD TARGET RETIREMENT 2045 INVESTOR CL,VTIVX,0.047,20.08,-0.95,0.0,-0.95,0.0,Cash,
+        #
+        # We're going to ignore the first transaction of every pair
+        # and then *assume* that it exists when we process the second one.
+        # What Could Go Wrong(tm)?
+
         trans_type = parts[3]
+        if trans_type == 'Dividend' or trans_type.startswith('Capital gain'):
+            return []
+
         date = datetime.strptime(parts[2], '%m/%d/%Y')
         quantity = Decimal(parts[7])
-        unit_price = Decimal(parts[6])
+        unit_price = Decimal(parts[8])
         total = quantity * unit_price
 
         commodity = funds.get(parts[5])
